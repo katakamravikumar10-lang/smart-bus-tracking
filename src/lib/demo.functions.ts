@@ -50,8 +50,10 @@ const ROUTES = [
     stops: [
       { name: "Gudur Bus Stand", lat: 14.1503, lng: 79.8506 },
       { name: "Gudur Railway Station", lat: 14.1467, lng: 79.8564 },
+      { name: "Swarnamukhi Bridge", lat: 14.1472, lng: 79.8530, kind: "bridge" },
       { name: "RTC Depot", lat: 14.1478, lng: 79.8489 },
       { name: "Balaji Nagar", lat: 14.1489, lng: 79.8460 },
+      { name: "Balaji Nagar Signal", lat: 14.1493, lng: 79.8450, kind: "signal" },
       COLLEGE,
     ],
   },
@@ -60,8 +62,10 @@ const ROUTES = [
     description: "Nellore Trunk Rd → Kovur → Manubolu → College",
     stops: [
       { name: "Nellore Bypass", lat: 14.4426, lng: 79.9865 },
+      { name: "Nellore Toll Plaza", lat: 14.4200, lng: 79.9600, kind: "toll" },
       { name: "Kovur Junction", lat: 14.4931, lng: 79.8927 },
       { name: "Manubolu", lat: 14.2650, lng: 79.8817 },
+      { name: "Pennar River Bridge", lat: 14.2300, lng: 79.9200, kind: "bridge" },
       { name: "Chillakur", lat: 14.1930, lng: 80.0090 },
       COLLEGE,
     ],
@@ -71,8 +75,10 @@ const ROUTES = [
     description: "Naidupeta → Sullurpeta → Venkatagiri → College",
     stops: [
       { name: "Naidupeta Bus Stand", lat: 13.9110, lng: 79.9075 },
+      { name: "NH-16 Toll Plaza", lat: 13.9400, lng: 79.8500, kind: "toll" },
       { name: "Venkatagiri", lat: 13.9673, lng: 79.5820 },
       { name: "Kota", lat: 14.0257, lng: 80.0068 },
+      { name: "Kandaleru Bridge", lat: 14.0450, lng: 80.0200, kind: "bridge" },
       { name: "Vakadu", lat: 14.0620, lng: 80.0331 },
       COLLEGE,
     ],
