@@ -150,8 +150,6 @@ export function StudentDashboard({ user }: { user: User }) {
             <p className="text-sm text-muted-foreground">Pick your bus above to start tracking.</p>
           )}
 
-          <BusMap buses={loc ? [{ id: loc.bus_id, bus_number: bus?.bus_number ?? "", lat: loc.lat, lng: loc.lng }] : []} stops={stops} focusBusId={loc?.bus_id} />
-
           {bus && stops.length > 0 && (
             <div className="rounded-lg border border-border bg-card p-3">
               <div className="mb-2 text-sm font-medium">Route stops · live tracking</div>
