@@ -5,7 +5,7 @@ import { BusMap } from "@/components/BusMap";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Play, Square, Navigation } from "lucide-react";
+import { AlertTriangle, Play, Square, Navigation, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { emitBusNotification } from "@/lib/notifications.functions";
@@ -21,6 +21,7 @@ export function DriverDashboard({ user }: { user: User }) {
   const [pos, setPos] = useState<{ lat: number; lng: number; speed?: number | null; heading?: number | null } | null>(null);
   const watchIdRef = useRef<number | null>(null);
   const emittedRef = useRef<Set<string>>(new Set());
+  const [gpsState, setGpsState] = useState<"idle" | "prompting" | "granted" | "denied" | "unavailable">("idle");
   const notify = useServerFn(emitBusNotification);
 
   function haversineM(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
@@ -63,6 +64,54 @@ export function DriverDashboard({ user }: { user: User }) {
 
   const busId = assignment?.buses?.id;
 
+  // Continuously share driver's phone location as this bus's location whenever assigned.
+  useEffect(() => {
+    if (!busId) return;
+    if (!("geolocation" in navigator)) {
+      setGpsState("unavailable");
+      toast.error("This device has no GPS. Location cannot be shared.");
+      return;
+    }
+    setGpsState("prompting");
+    const id = navigator.geolocation.watchPosition(
+      (p) => {
+        setGpsState("granted");
+        pushLocation(p.coords);
+      },
+      (err) => {
+        if (err.code === err.PERMISSION_DENIED) {
+          setGpsState("denied");
+          toast.error("Location permission denied. Enable it in your browser to share the bus location.");
+        } else {
+          toast.error("GPS: " + err.message);
+        }
+      },
+      { enableHighAccuracy: true, maximumAge: 3000, timeout: 15000 },
+    );
+    watchIdRef.current = id;
+    return () => {
+      if (watchIdRef.current != null) navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    };
+  }, [busId]);
+
+  async function requestLocationAgain() {
+    if (!("geolocation" in navigator)) return;
+    setGpsState("prompting");
+    navigator.geolocation.getCurrentPosition(
+      (p) => {
+        setGpsState("granted");
+        pushLocation(p.coords);
+        toast.success("Location sharing enabled");
+      },
+      (err) => {
+        setGpsState(err.code === err.PERMISSION_DENIED ? "denied" : "unavailable");
+        toast.error("Enable location in browser settings to continue.");
+      },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 },
+    );
+  }
+
   async function pushLocation(coords: GeolocationCoordinates) {
     if (!busId) return;
     const payload = {
@@ -102,24 +151,18 @@ export function DriverDashboard({ user }: { user: User }) {
   async function startTrip() {
     if (!busId) return toast.error("No bus assigned. Contact admin.");
     if (!navigator.geolocation) return toast.error("Geolocation not available");
+    if (gpsState === "denied") return toast.error("Enable location permission first.");
     const { data, error } = await supabase.from("trips").insert({ bus_id: busId, driver_id: user.id }).select("id").single();
     if (error) return toast.error(error.message);
     setTripId(data.id);
     emittedRef.current = new Set();
     await supabase.from("buses").update({ status: "running" }).eq("id", busId);
     notify({ data: { busId, type: "trip_started" } }).catch(() => {});
-    watchIdRef.current = navigator.geolocation.watchPosition(
-      (p) => pushLocation(p.coords),
-      (err) => toast.error("GPS: " + err.message),
-      { enableHighAccuracy: true, maximumAge: 3000, timeout: 15000 },
-    );
     toast.success("Trip started · sharing GPS");
   }
 
   async function endTrip() {
     if (!tripId) return;
-    if (watchIdRef.current != null) navigator.geolocation.clearWatch(watchIdRef.current);
-    watchIdRef.current = null;
     await supabase.from("trips").update({ status: "completed", ended_at: new Date().toISOString() }).eq("id", tripId);
     if (busId) await supabase.from("buses").update({ status: "completed" }).eq("id", busId);
     if (busId) notify({ data: { busId, type: "trip_completed" } }).catch(() => {});
@@ -140,12 +183,6 @@ export function DriverDashboard({ user }: { user: User }) {
     toast.success("Emergency alert sent to admin");
   }
 
-  useEffect(() => {
-    return () => {
-      if (watchIdRef.current != null) navigator.geolocation.clearWatch(watchIdRef.current);
-    };
-  }, []);
-
   const mapBuses = useMemo(() => (pos && busId ? [{ id: busId, bus_number: assignment?.buses?.bus_number ?? "", lat: pos.lat, lng: pos.lng }] : []), [pos, busId, assignment]);
 
   return (
@@ -159,6 +196,33 @@ export function DriverDashboard({ user }: { user: User }) {
             <p className="text-sm text-muted-foreground">You have no bus assignment yet. Please contact the transport office.</p>
           ) : (
             <>
+              {(gpsState === "denied" || gpsState === "unavailable") && (
+                <div className="rounded-lg border border-destructive/50 bg-destructive/5 p-3">
+                  <div className="flex items-start gap-2">
+                    <MapPin className="mt-0.5 h-4 w-4 text-destructive" />
+                    <div className="flex-1 space-y-2 text-sm">
+                      <div className="font-medium text-destructive">Location sharing is off</div>
+                      <p className="text-muted-foreground">
+                        Your phone's location is used as this bus's live location. Please enable location access so students and faculty can track Bus {assignment.buses?.bus_number}.
+                      </p>
+                      <Button size="sm" variant="outline" onClick={requestLocationAgain}>
+                        Enable location
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {gpsState === "prompting" && (
+                <div className="rounded-lg border border-border bg-muted/40 p-3 text-sm text-muted-foreground">
+                  Requesting location permission… please allow it in the browser prompt.
+                </div>
+              )}
+              {gpsState === "granted" && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span className="inline-block h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                  Sharing live location as Bus {assignment.buses?.bus_number}
+                </div>
+              )}
               <div className="flex flex-wrap items-center gap-3 text-sm">
                 <Badge className="bg-primary text-primary-foreground">Bus {assignment.buses?.bus_number}</Badge>
                 {routeName && <Badge variant="outline">{routeName}</Badge>}
