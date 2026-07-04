@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Bus, Route as RouteIcon, Users, Megaphone, Trash2, FlaskConical } from "lucide-react";
+import { Bus, Route as RouteIcon, Users, Megaphone, Trash2, FlaskConical, ArrowLeft, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { DemoModeTab } from "@/components/dashboards/DemoModeTab";
 
@@ -28,6 +28,17 @@ export function AdminDashboard({ user }: { user: User }) {
   const [locs, setLocs] = useState<Record<string, Loc>>({});
   const [drivers, setDrivers] = useState<Person[]>([]);
   const [driverAssignments, setDriverAssignments] = useState<{ id: string; driver_id: string; bus_id: string; active: boolean }[]>([]);
+  const [tabHistory, setTabHistory] = useState<string[]>(["buses"]);
+  const [tabIndex, setTabIndex] = useState(0);
+  const currentTab = tabHistory[tabIndex];
+
+  function goToTab(v: string) {
+    if (v === currentTab) return;
+    const next = tabHistory.slice(0, tabIndex + 1);
+    next.push(v);
+    setTabHistory(next);
+    setTabIndex(next.length - 1);
+  }
 
   async function refreshAll() {
     const [b, r, l, da, ur] = await Promise.all([
@@ -87,15 +98,37 @@ export function AdminDashboard({ user }: { user: User }) {
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="buses">
-        <div className="w-full overflow-x-auto">
-          <TabsList className="w-max">
+      <Tabs value={currentTab} onValueChange={goToTab}>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-9 w-9 shrink-0"
+            onClick={() => setTabIndex((i) => Math.max(0, i - 1))}
+            disabled={tabIndex === 0}
+            aria-label="Previous tab"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-9 w-9 shrink-0"
+            onClick={() => setTabIndex((i) => Math.min(tabHistory.length - 1, i + 1))}
+            disabled={tabIndex >= tabHistory.length - 1}
+            aria-label="Next tab"
+          >
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+          <div className="min-w-0 flex-1 overflow-x-auto">
+            <TabsList className="w-max">
             <TabsTrigger value="buses"><Bus className="mr-1 h-4 w-4" />Buses</TabsTrigger>
             <TabsTrigger value="routes"><RouteIcon className="mr-1 h-4 w-4" />Routes</TabsTrigger>
             <TabsTrigger value="drivers"><Users className="mr-1 h-4 w-4" />Drivers</TabsTrigger>
             <TabsTrigger value="announce"><Megaphone className="mr-1 h-4 w-4" />Announcements</TabsTrigger>
-            <TabsTrigger value="demo"><FlaskConical className="mr-1 h-4 w-4" />Demo Mode</TabsTrigger>
-          </TabsList>
+              <TabsTrigger value="demo"><FlaskConical className="mr-1 h-4 w-4" />Demo Mode</TabsTrigger>
+            </TabsList>
+          </div>
         </div>
 
         <TabsContent value="buses"><BusesTab buses={buses} routes={routes} onChange={refreshAll} /></TabsContent>
