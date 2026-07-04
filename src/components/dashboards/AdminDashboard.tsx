@@ -13,7 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { Bus, Route as RouteIcon, Users, Megaphone, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-type BusRow = { id: string; bus_number: string; capacity: number; route_id: string | null; status: string; active: boolean };
+type BusStatus = "idle" | "running" | "delayed" | "maintenance" | "completed";
+type BusRow = { id: string; bus_number: string; capacity: number; route_id: string | null; status: BusStatus; active: boolean };
 type RouteRow = { id: string; name: string; description: string | null; stops: Stop[]; active: boolean };
 type Stop = { name: string; lat: number; lng: number; order?: number };
 type Loc = { bus_id: string; lat: number; lng: number; updated_at: string };
@@ -127,7 +128,7 @@ function BusesTab({ buses, routes, onChange }: { buses: BusRow[]; routes: RouteR
     toast.success("Bus added");
   }
 
-  async function update(id: string, patch: Partial<BusRow>) {
+  async function update(id: string, patch: { route_id?: string | null; status?: BusStatus; active?: boolean }) {
     const { error } = await supabase.from("buses").update(patch).eq("id", id);
     if (error) return toast.error(error.message);
     onChange();
