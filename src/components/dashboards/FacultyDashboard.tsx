@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { BusMap, haversineKm } from "@/components/BusMap";
+import { haversineKm } from "@/components/BusMap";
 import { BusRouteTimeline } from "@/components/BusRouteTimeline";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -177,7 +177,6 @@ export function FacultyDashboard({ user }: { user: User }) {
               );
             })}
           </div>
-          <BusMap buses={mapBuses} />
         </CardContent>
       </Card>
 
