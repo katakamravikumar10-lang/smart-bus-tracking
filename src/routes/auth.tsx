@@ -87,32 +87,32 @@ function AuthPage() {
         <div className="w-full max-w-md">
           {/* Mobile banner */}
           <div className="lg:hidden mb-6 overflow-hidden rounded-2xl border border-border bg-card shadow-md">
-            <div className="relative bg-gradient-to-br from-primary to-primary/80 p-4 text-primary-foreground">
-              <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-white p-1">
-                  <img src={collegeLogo.url} alt="NEC Logo" className="h-10 w-10 object-contain" />
+            <div className="relative bg-gradient-to-br from-primary to-primary/80 p-5 text-primary-foreground">
+              <div className="flex items-center gap-4">
+                <div className="rounded-xl bg-white p-1.5 shadow-sm">
+                  <img src={collegeLogo.url} alt="NEC Logo" className="h-14 w-14 object-contain" />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-sm font-bold leading-tight">Narayana Engineering College</div>
-                  <div className="text-[11px] opacity-85">Gudur · Autonomous</div>
+                  <div className="text-lg font-bold leading-tight">Narayana Engineering College</div>
+                  <div className="text-xs opacity-85">Gudur · Autonomous</div>
                 </div>
               </div>
               <img
                 src={collegeBanner.url}
                 alt="NEC accreditations"
-                className="mt-3 h-14 w-full rounded-md bg-white object-contain p-1"
+                className="mt-4 h-24 w-full rounded-lg bg-white object-contain p-1.5 shadow-sm"
               />
             </div>
-            <div className="flex items-center gap-3 p-3">
+            <div className="flex items-center gap-4 p-4">
               <img
                 src={founderImg.url}
                 alt="Dr. Ponguru Narayana"
-                className="h-14 w-12 rounded-md object-cover ring-2 ring-primary/20"
+                className="h-20 w-16 rounded-lg object-cover ring-2 ring-primary/20"
               />
               <div className="leading-tight">
-                <div className="text-[10px] uppercase tracking-wider text-accent-foreground/70">Founder</div>
-                <div className="text-sm font-semibold text-primary">Dr. Ponguru Narayana</div>
-                <div className="text-[11px] text-muted-foreground">Smart Bus Tracking</div>
+                <div className="text-[11px] uppercase tracking-wider text-accent-foreground/70">Founder</div>
+                <div className="text-base font-semibold text-primary">Dr. Ponguru Narayana</div>
+                <div className="text-xs text-muted-foreground">Smart Bus Tracking</div>
               </div>
             </div>
           </div>
