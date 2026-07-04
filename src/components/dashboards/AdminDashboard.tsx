@@ -73,7 +73,7 @@ export function AdminDashboard({ user }: { user: User }) {
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-4">
         <Stat label="Total buses" value={buses.length} />
-        <Stat label="RUNNING BUSES" value={buses.filter((b) => b.active).length} />
+        <Stat label="Active buses" value={buses.filter((b) => b.active).length} />
         <Stat label="Live now" value={Object.keys(locs).length} />
         <Stat label="Drivers" value={drivers.length} />
       </div>
