@@ -255,7 +255,14 @@ export const seedDemoData = createServerFn({ method: "POST" })
 
     // 9. Sample historic trips (last 3 days)
     const now = Date.now();
-    const trips: Array<Record<string, unknown>> = [];
+    const trips: Array<{
+      bus_id: string;
+      driver_id: string;
+      started_at: string;
+      ended_at: string;
+      status: "completed";
+      is_demo: boolean;
+    }> = [];
     for (let d = 1; d <= 3; d++) {
       for (const dm of driverMap) {
         const start = new Date(now - d * 24 * 3600 * 1000 - 8 * 3600 * 1000);
