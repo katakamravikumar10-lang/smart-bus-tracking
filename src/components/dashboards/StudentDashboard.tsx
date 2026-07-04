@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { BusMap, haversineKm } from "@/components/BusMap";
+import { BusRouteTimeline } from "@/components/BusRouteTimeline";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -150,6 +151,18 @@ export function StudentDashboard({ user }: { user: User }) {
           )}
 
           <BusMap buses={loc ? [{ id: loc.bus_id, bus_number: bus?.bus_number ?? "", lat: loc.lat, lng: loc.lng }] : []} stops={stops} focusBusId={loc?.bus_id} />
+
+          {bus && stops.length > 0 && (
+            <div className="rounded-lg border border-border bg-card p-3">
+              <div className="mb-2 text-sm font-medium">Route stops · live tracking</div>
+              <BusRouteTimeline
+                stops={stops}
+                loc={loc}
+                boardingStop={boardingStop}
+                busNumber={bus.bus_number}
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
 
