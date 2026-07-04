@@ -3,9 +3,12 @@ import logo from "@/assets/logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
+import { NotificationsBell } from "@/components/NotificationsBell";
+import { useSession } from "@/lib/auth-hooks";
 
 export function BrandHeader({ subtitle, showSignOut = true }: { subtitle?: string; showSignOut?: boolean }) {
   const navigate = useNavigate();
+  const { user } = useSession();
   async function signOut() {
     await supabase.auth.signOut();
     navigate({ to: "/auth", replace: true });
@@ -20,11 +23,14 @@ export function BrandHeader({ subtitle, showSignOut = true }: { subtitle?: strin
             <div className="text-xs text-muted-foreground">{subtitle ?? "Smart Bus Tracking · Gudur"}</div>
           </div>
         </Link>
-        {showSignOut && (
-          <Button variant="ghost" size="sm" onClick={signOut}>
-            <LogOut className="mr-1 h-4 w-4" /> Sign out
-          </Button>
-        )}
+        <div className="flex items-center gap-1">
+          {user && <NotificationsBell user={user} />}
+          {showSignOut && (
+            <Button variant="ghost" size="sm" onClick={signOut}>
+              <LogOut className="mr-1 h-4 w-4" /> Sign out
+            </Button>
+          )}
+        </div>
       </div>
     </header>
   );
