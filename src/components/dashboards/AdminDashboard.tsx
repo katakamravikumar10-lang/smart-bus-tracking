@@ -102,7 +102,7 @@ export function AdminDashboard({ user }: { user: User }) {
           <DriversTab drivers={drivers} buses={buses} assignments={driverAssignments} onChange={refreshAll} />
         </TabsContent>
         <TabsContent value="announce"><AnnouncementsTab routes={routes} /></TabsContent>
-        <TabsContent value="demo"><DemoModeTab /></TabsContent>
+        <TabsContent value="demo"><DemoModeTab onDataChange={refreshAll} /></TabsContent>
       </Tabs>
     </div>
   );
