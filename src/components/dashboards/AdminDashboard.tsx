@@ -10,8 +10,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Bus, Route as RouteIcon, Users, Megaphone, Trash2 } from "lucide-react";
+import { Bus, Route as RouteIcon, Users, Megaphone, Trash2, FlaskConical } from "lucide-react";
 import { toast } from "sonner";
+import { DemoModeTab } from "@/components/dashboards/DemoModeTab";
 
 type BusStatus = "idle" | "running" | "delayed" | "maintenance" | "completed";
 type BusRow = { id: string; bus_number: string; capacity: number; route_id: string | null; status: BusStatus; active: boolean };
@@ -92,6 +93,7 @@ export function AdminDashboard({ user }: { user: User }) {
           <TabsTrigger value="routes"><RouteIcon className="mr-1 h-4 w-4" />Routes</TabsTrigger>
           <TabsTrigger value="drivers"><Users className="mr-1 h-4 w-4" />Drivers</TabsTrigger>
           <TabsTrigger value="announce"><Megaphone className="mr-1 h-4 w-4" />Announcements</TabsTrigger>
+          <TabsTrigger value="demo"><FlaskConical className="mr-1 h-4 w-4" />Demo Mode</TabsTrigger>
         </TabsList>
 
         <TabsContent value="buses"><BusesTab buses={buses} routes={routes} onChange={refreshAll} /></TabsContent>
@@ -100,6 +102,7 @@ export function AdminDashboard({ user }: { user: User }) {
           <DriversTab drivers={drivers} buses={buses} assignments={driverAssignments} onChange={refreshAll} />
         </TabsContent>
         <TabsContent value="announce"><AnnouncementsTab routes={routes} /></TabsContent>
+        <TabsContent value="demo"><DemoModeTab /></TabsContent>
       </Tabs>
     </div>
   );
