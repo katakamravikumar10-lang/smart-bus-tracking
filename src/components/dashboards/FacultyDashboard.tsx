@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { BusMap, haversineKm } from "@/components/BusMap";
+import { haversineKm } from "@/components/BusMap";
 import { BusRouteTimeline } from "@/components/BusRouteTimeline";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -81,11 +81,6 @@ export function FacultyDashboard({ user }: { user: User }) {
     toast.success("Assignment saved");
   }
 
-  const mapBuses = Object.values(locs).map((l) => {
-    const b = buses.find((bb) => bb.id === l.bus_id);
-    return { id: l.bus_id, bus_number: b?.bus_number ?? "", lat: l.lat, lng: l.lng };
-  });
-
   return (
     <div className="space-y-6">
       <Card>
@@ -147,12 +142,6 @@ export function FacultyDashboard({ user }: { user: User }) {
             <p className="text-sm text-muted-foreground">Pick your bus above to start tracking your daily commute.</p>
           )}
 
-          <BusMap
-            buses={myLoc ? [{ id: myLoc.bus_id, bus_number: myBus?.bus_number ?? "", lat: myLoc.lat, lng: myLoc.lng }] : []}
-            stops={stops}
-            focusBusId={myLoc?.bus_id}
-          />
-
           {myBus && stops.length > 0 && (
             <div className="rounded-lg border border-border bg-card p-3">
               <div className="mb-2 text-sm font-medium">Route stops · live tracking</div>
@@ -183,7 +172,6 @@ export function FacultyDashboard({ user }: { user: User }) {
               );
             })}
           </div>
-          <BusMap buses={mapBuses} />
         </CardContent>
       </Card>
 

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { BusMap, haversineKm } from "@/components/BusMap";
+import { haversineKm } from "@/components/BusMap";
 import { BusRouteTimeline } from "@/components/BusRouteTimeline";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -149,8 +149,6 @@ export function StudentDashboard({ user }: { user: User }) {
           ) : (
             <p className="text-sm text-muted-foreground">Pick your bus above to start tracking.</p>
           )}
-
-          <BusMap buses={loc ? [{ id: loc.bus_id, bus_number: bus?.bus_number ?? "", lat: loc.lat, lng: loc.lng }] : []} stops={stops} focusBusId={loc?.bus_id} />
 
           {bus && stops.length > 0 && (
             <div className="rounded-lg border border-border bg-card p-3">
