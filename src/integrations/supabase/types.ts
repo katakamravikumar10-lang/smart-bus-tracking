@@ -14,16 +14,374 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      announcements: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_emergency: boolean
+          route_id: string | null
+          target_role: Database["public"]["Enums"]["app_role"] | null
+          title: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_emergency?: boolean
+          route_id?: string | null
+          target_role?: Database["public"]["Enums"]["app_role"] | null
+          title: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_emergency?: boolean
+          route_id?: string | null
+          target_role?: Database["public"]["Enums"]["app_role"] | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcements_route_id_fkey"
+            columns: ["route_id"]
+            isOneToOne: false
+            referencedRelation: "routes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bus_locations: {
+        Row: {
+          bus_id: string
+          driver_id: string | null
+          heading: number | null
+          lat: number
+          lng: number
+          speed: number | null
+          updated_at: string
+        }
+        Insert: {
+          bus_id: string
+          driver_id?: string | null
+          heading?: number | null
+          lat: number
+          lng: number
+          speed?: number | null
+          updated_at?: string
+        }
+        Update: {
+          bus_id?: string
+          driver_id?: string | null
+          heading?: number | null
+          lat?: number
+          lng?: number
+          speed?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bus_locations_bus_id_fkey"
+            columns: ["bus_id"]
+            isOneToOne: true
+            referencedRelation: "buses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      buses: {
+        Row: {
+          active: boolean
+          bus_number: string
+          capacity: number
+          created_at: string
+          id: string
+          notes: string | null
+          route_id: string | null
+          status: Database["public"]["Enums"]["bus_status"]
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          bus_number: string
+          capacity?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          route_id?: string | null
+          status?: Database["public"]["Enums"]["bus_status"]
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          bus_number?: string
+          capacity?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          route_id?: string | null
+          status?: Database["public"]["Enums"]["bus_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "buses_route_id_fkey"
+            columns: ["route_id"]
+            isOneToOne: false
+            referencedRelation: "routes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      driver_assignments: {
+        Row: {
+          active: boolean
+          bus_id: string
+          created_at: string
+          driver_id: string
+          id: string
+        }
+        Insert: {
+          active?: boolean
+          bus_id: string
+          created_at?: string
+          driver_id: string
+          id?: string
+        }
+        Update: {
+          active?: boolean
+          bus_id?: string
+          created_at?: string
+          driver_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "driver_assignments_bus_id_fkey"
+            columns: ["bus_id"]
+            isOneToOne: false
+            referencedRelation: "buses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feedback: {
+        Row: {
+          bus_id: string | null
+          created_at: string
+          id: string
+          message: string
+          resolved: boolean
+          subject: string
+          user_id: string
+        }
+        Insert: {
+          bus_id?: string | null
+          created_at?: string
+          id?: string
+          message: string
+          resolved?: boolean
+          subject: string
+          user_id: string
+        }
+        Update: {
+          bus_id?: string | null
+          created_at?: string
+          id?: string
+          message?: string
+          resolved?: boolean
+          subject?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_bus_id_fkey"
+            columns: ["bus_id"]
+            isOneToOne: false
+            referencedRelation: "buses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          department: string | null
+          email: string | null
+          full_name: string | null
+          id: string
+          phone: string | null
+          roll_no: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          department?: string | null
+          email?: string | null
+          full_name?: string | null
+          id: string
+          phone?: string | null
+          roll_no?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          department?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          roll_no?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      routes: {
+        Row: {
+          active: boolean
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          stops: Json
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          stops?: Json
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          stops?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      student_assignments: {
+        Row: {
+          boarding_stop: string | null
+          bus_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          boarding_stop?: string | null
+          bus_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          boarding_stop?: string | null
+          bus_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_assignments_bus_id_fkey"
+            columns: ["bus_id"]
+            isOneToOne: false
+            referencedRelation: "buses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trips: {
+        Row: {
+          bus_id: string
+          driver_id: string
+          ended_at: string | null
+          id: string
+          notes: string | null
+          started_at: string
+          status: Database["public"]["Enums"]["trip_status"]
+        }
+        Insert: {
+          bus_id: string
+          driver_id: string
+          ended_at?: string | null
+          id?: string
+          notes?: string | null
+          started_at?: string
+          status?: Database["public"]["Enums"]["trip_status"]
+        }
+        Update: {
+          bus_id?: string
+          driver_id?: string
+          ended_at?: string | null
+          id?: string
+          notes?: string | null
+          started_at?: string
+          status?: Database["public"]["Enums"]["trip_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trips_bus_id_fkey"
+            columns: ["bus_id"]
+            isOneToOne: false
+            referencedRelation: "buses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      current_user_role: {
+        Args: never
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "student" | "faculty" | "driver" | "admin"
+      bus_status: "running" | "delayed" | "maintenance" | "completed" | "idle"
+      trip_status: "active" | "completed" | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +508,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["student", "faculty", "driver", "admin"],
+      bus_status: ["running", "delayed", "maintenance", "completed", "idle"],
+      trip_status: ["active", "completed", "cancelled"],
+    },
   },
 } as const
