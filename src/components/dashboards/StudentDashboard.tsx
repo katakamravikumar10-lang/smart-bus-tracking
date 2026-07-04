@@ -197,6 +197,7 @@ function FeedbackCard({ user, buses }: { user: User; buses: BusRow[] }) {
     if (error) return toast.error(error.message);
     setSubject("");
     setMessage("");
+    setBusId("");
     toast.success("Feedback sent");
   }
 

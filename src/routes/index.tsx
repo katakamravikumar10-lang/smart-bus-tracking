@@ -1,5 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png";
 import { Button } from "@/components/ui/button";
 import { Bus, MapPin, Bell, ShieldCheck } from "lucide-react";
@@ -9,6 +10,15 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const navigate = useNavigate();
+  const [authed, setAuthed] = useState(false);
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setAuthed(!!data.session));
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setAuthed(!!s));
+    return () => sub.subscription.unsubscribe();
+  }, []);
+  const primaryHref = authed ? "/dashboard" : "/auth";
+  const primaryLabel = authed ? "Open dashboard" : "Sign in";
   return (
     <div className="min-h-screen bg-gradient-to-br from-secondary via-background to-secondary">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
@@ -19,7 +29,7 @@ function Index() {
             <div className="text-xs text-muted-foreground">Gudur · Smart Bus Tracking</div>
           </div>
         </div>
-        <Link to="/auth"><Button>Sign in</Button></Link>
+        <Button onClick={() => navigate({ to: primaryHref })}>{primaryLabel}</Button>
       </header>
 
       <section className="mx-auto max-w-6xl px-6 py-16 text-center sm:py-24">
@@ -34,8 +44,8 @@ function Index() {
           and stay informed with instant announcements from the transport office.
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <Link to="/auth"><Button size="lg">Get started</Button></Link>
-          <Link to="/auth"><Button size="lg" variant="outline">Driver login</Button></Link>
+          <Link to={primaryHref}><Button size="lg">{authed ? "Open dashboard" : "Get started"}</Button></Link>
+          {!authed && <Link to="/auth"><Button size="lg" variant="outline">Driver login</Button></Link>}
         </div>
       </section>
 

@@ -45,7 +45,7 @@ function haversineM(a: { lat: number; lng: number }, b: { lat: number; lng: numb
   return 2 * R * Math.asin(Math.sqrt(s));
 }
 
-export function DemoModeTab() {
+export function DemoModeTab({ onDataChange }: { onDataChange?: () => void } = {}) {
   const seed = useServerFn(seedDemoData);
   const clear = useServerFn(clearDemoData);
   const [busy, setBusy] = useState<null | "seed" | "clear">(null);
@@ -57,6 +57,7 @@ export function DemoModeTab() {
     try {
       const res = await seed();
       toast.success(`Loaded ${res.accounts} accounts, ${res.buses} buses, ${res.routes} routes`);
+      onDataChange?.();
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -70,6 +71,7 @@ export function DemoModeTab() {
     try {
       const res = await clear();
       toast.success(`Removed ${res.removedUsers} users, ${res.removedBuses} buses`);
+      onDataChange?.();
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
