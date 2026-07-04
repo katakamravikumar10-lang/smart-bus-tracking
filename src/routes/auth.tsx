@@ -196,3 +196,63 @@ function SignUpForm({ onPending }: { onPending: (email: string) => void }) {
     </form>
   );
 }
+
+function VerifyPending({ email, onBack }: { email: string; onBack: () => void }) {
+  const [resending, setResending] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const navigate = useNavigate();
+
+  async function resend() {
+    setResending(true);
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email,
+      options: { emailRedirectTo: window.location.origin },
+    });
+    setResending(false);
+    if (error) toast.error(error.message);
+    else toast.success("Verification email sent. Check your inbox.");
+  }
+
+  async function recheck() {
+    setChecking(true);
+    const { data } = await supabase.auth.getSession();
+    setChecking(false);
+    if (data.session) navigate({ to: "/dashboard", replace: true });
+    else toast.info("Still unverified. Open the link in the email we sent you.");
+  }
+
+  return (
+    <div className="space-y-4 text-center">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-secondary text-primary">
+        <MailCheck className="h-7 w-7" />
+      </div>
+      <div>
+        <h2 className="text-lg font-semibold text-foreground">Verify your email</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          We sent a confirmation link to
+        </p>
+        <p className="mt-0.5 text-sm font-medium text-foreground break-all">{email}</p>
+      </div>
+      <div className="rounded-lg border border-dashed border-border bg-secondary/40 p-3 text-left text-xs text-muted-foreground">
+        <p className="font-medium text-foreground">Status: Not verified yet</p>
+        <p className="mt-1">
+          Access to the dashboard is blocked until you click the confirmation link.
+          Check your spam folder if the email hasn't arrived.
+        </p>
+      </div>
+      <div className="space-y-2">
+        <Button type="button" className="w-full" onClick={recheck} disabled={checking}>
+          <RefreshCw className={`mr-2 h-4 w-4 ${checking ? "animate-spin" : ""}`} />
+          I've verified — continue
+        </Button>
+        <Button type="button" variant="outline" className="w-full" onClick={resend} disabled={resending}>
+          {resending ? "Sending…" : "Resend verification email"}
+        </Button>
+        <Button type="button" variant="ghost" className="w-full" onClick={onBack}>
+          <ArrowLeft className="mr-2 h-4 w-4" /> Back to sign in
+        </Button>
+      </div>
+    </div>
+  );
+}
