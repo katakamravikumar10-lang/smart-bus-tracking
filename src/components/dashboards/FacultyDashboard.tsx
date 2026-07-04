@@ -147,12 +147,6 @@ export function FacultyDashboard({ user }: { user: User }) {
             <p className="text-sm text-muted-foreground">Pick your bus above to start tracking your daily commute.</p>
           )}
 
-          <BusMap
-            buses={myLoc ? [{ id: myLoc.bus_id, bus_number: myBus?.bus_number ?? "", lat: myLoc.lat, lng: myLoc.lng }] : []}
-            stops={stops}
-            focusBusId={myLoc?.bus_id}
-          />
-
           {myBus && stops.length > 0 && (
             <div className="rounded-lg border border-border bg-card p-3">
               <div className="mb-2 text-sm font-medium">Route stops · live tracking</div>
