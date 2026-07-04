@@ -81,11 +81,6 @@ export function FacultyDashboard({ user }: { user: User }) {
     toast.success("Assignment saved");
   }
 
-  const mapBuses = Object.values(locs).map((l) => {
-    const b = buses.find((bb) => bb.id === l.bus_id);
-    return { id: l.bus_id, bus_number: b?.bus_number ?? "", lat: l.lat, lng: l.lng };
-  });
-
   return (
     <div className="space-y-6">
       <Card>
