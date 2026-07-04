@@ -10,7 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Bus, MapPin, Bell, MessageSquare } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Bus, MapPin, Bell, MessageSquare, ArrowLeft, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 
 type BusRow = { id: string; bus_number: string; route_id: string | null; status: string };
@@ -25,6 +26,27 @@ export function StudentDashboard({ user }: { user: User }) {
   const [boardingStop, setBoardingStop] = useState<string>("");
   const [loc, setLoc] = useState<Loc | null>(null);
   const [announcements, setAnnouncements] = useState<{ id: string; title: string; body: string; created_at: string; is_emergency: boolean }[]>([]);
+  const [tabHistory, setTabHistory] = useState<string[]>(["bus"]);
+  const [tabIndex, setTabIndex] = useState(0);
+
+  const allTabs = ["bus", "announcements", "feedback"];
+  const currentTab = tabHistory[tabIndex] ?? "bus";
+
+  function goToTab(tab: string) {
+    const next = tabHistory.slice(0, tabIndex + 1);
+    if (next[next.length - 1] !== tab) {
+      setTabHistory([...next, tab]);
+      setTabIndex(next.length);
+    }
+  }
+
+  function goBack() {
+    if (tabIndex > 0) setTabIndex(tabIndex - 1);
+  }
+
+  function goForward() {
+    if (tabIndex < tabHistory.length - 1) setTabIndex(tabIndex + 1);
+  }
 
   useEffect(() => {
     supabase.from("buses").select("*").eq("active", true).then(({ data }) => setBuses(data ?? []));
@@ -90,81 +112,99 @@ export function StudentDashboard({ user }: { user: User }) {
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Bus className="h-5 w-5 text-accent" /> Your Bus</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label>Assigned bus</Label>
-              <Select value={assignedBusId ?? ""} onValueChange={(v) => saveAssignment(v, boardingStop)}>
-                <SelectTrigger><SelectValue placeholder="Select a bus" /></SelectTrigger>
-                <SelectContent>
-                  {buses.map((b) => {
-                    const r = routes.find((rr) => rr.id === b.route_id);
-                    return (
-                      <SelectItem key={b.id} value={b.id}>
-                        Bus {b.bus_number} {r ? `· ${r.name}` : ""}
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Boarding stop</Label>
-              <Select
-                value={boardingStop || ""}
-                onValueChange={(v) => assignedBusId && saveAssignment(assignedBusId, v)}
-                disabled={!stops.length}
-              >
-                <SelectTrigger><SelectValue placeholder={stops.length ? "Select stop" : "No stops on this route"} /></SelectTrigger>
-                <SelectContent>
-                  {stops.map((s) => (
-                    <SelectItem key={s.name} value={s.name}>{s.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+    <Tabs value={currentTab} onValueChange={goToTab} className="space-y-4">
+      <div className="flex items-center gap-2">
+        <Button variant="outline" size="icon" onClick={goBack} disabled={tabIndex <= 0} aria-label="Go back">
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div className="min-w-0 flex-1 overflow-x-auto">
+          <TabsList className="w-full">
+            <TabsTrigger value="bus" className="flex-1">Your Bus</TabsTrigger>
+            <TabsTrigger value="announcements" className="flex-1">Announcements</TabsTrigger>
+            <TabsTrigger value="feedback" className="flex-1">Report an issue</TabsTrigger>
+          </TabsList>
+        </div>
+        <Button variant="outline" size="icon" onClick={goForward} disabled={tabIndex >= tabHistory.length - 1} aria-label="Go forward">
+          <ArrowRight className="h-4 w-4" />
+        </Button>
+      </div>
 
-          {bus ? (
-            <div className="flex flex-wrap items-center gap-3 text-sm">
-              <Badge variant="secondary" className="bg-primary text-primary-foreground">Bus {bus.bus_number}</Badge>
-              <Badge variant="outline">Status: {bus.status}</Badge>
-              {distanceKm != null && (
-                <span className="text-muted-foreground">
-                  <MapPin className="mr-1 inline h-4 w-4 text-accent" />
-                  {distanceKm.toFixed(2)} km from your stop{etaMin != null ? ` · ETA ~${etaMin} min` : ""}
-                </span>
-              )}
-              {loc && (
-                <span className="text-xs text-muted-foreground">
-                  Last update: {new Date(loc.updated_at).toLocaleTimeString()}
-                </span>
-              )}
+      <TabsContent value="bus" className="space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Bus className="h-5 w-5 text-accent" /> Your Bus</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label>Assigned bus</Label>
+                <Select value={assignedBusId ?? ""} onValueChange={(v) => saveAssignment(v, boardingStop)}>
+                  <SelectTrigger><SelectValue placeholder="Select a bus" /></SelectTrigger>
+                  <SelectContent>
+                    {buses.map((b) => {
+                      const r = routes.find((rr) => rr.id === b.route_id);
+                      return (
+                        <SelectItem key={b.id} value={b.id}>
+                          Bus {b.bus_number} {r ? `· ${r.name}` : ""}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Boarding stop</Label>
+                <Select
+                  value={boardingStop || ""}
+                  onValueChange={(v) => assignedBusId && saveAssignment(assignedBusId, v)}
+                  disabled={!stops.length}
+                >
+                  <SelectTrigger><SelectValue placeholder={stops.length ? "Select stop" : "No stops on this route"} /></SelectTrigger>
+                  <SelectContent>
+                    {stops.map((s) => (
+                      <SelectItem key={s.name} value={s.name}>{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">Pick your bus above to start tracking.</p>
-          )}
 
-          {bus && stops.length > 0 && (
-            <div className="rounded-lg border border-border bg-card p-3">
-              <div className="mb-2 text-sm font-medium">Route stops · live tracking</div>
-              <BusRouteTimeline
-                stops={stops}
-                loc={loc}
-                boardingStop={boardingStop}
-                busNumber={bus.bus_number}
-              />
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            {bus ? (
+              <div className="flex flex-wrap items-center gap-3 text-sm">
+                <Badge variant="secondary" className="bg-primary text-primary-foreground">Bus {bus.bus_number}</Badge>
+                <Badge variant="outline">Status: {bus.status}</Badge>
+                {distanceKm != null && (
+                  <span className="text-muted-foreground">
+                    <MapPin className="mr-1 inline h-4 w-4 text-accent" />
+                    {distanceKm.toFixed(2)} km from your stop{etaMin != null ? ` · ETA ~${etaMin} min` : ""}
+                  </span>
+                )}
+                {loc && (
+                  <span className="text-xs text-muted-foreground">
+                    Last update: {new Date(loc.updated_at).toLocaleTimeString()}
+                  </span>
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Pick your bus above to start tracking.</p>
+            )}
 
-      <div className="grid gap-4 lg:grid-cols-2">
+            {bus && stops.length > 0 && (
+              <div className="rounded-lg border border-border bg-card p-3">
+                <div className="mb-2 text-sm font-medium">Route stops · live tracking</div>
+                <BusRouteTimeline
+                  stops={stops}
+                  loc={loc}
+                  boardingStop={boardingStop}
+                  busNumber={bus.bus_number}
+                />
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="announcements" className="space-y-4">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><Bell className="h-5 w-5 text-accent" /> Announcements</CardTitle>
@@ -182,10 +222,12 @@ export function StudentDashboard({ user }: { user: User }) {
             ))}
           </CardContent>
         </Card>
+      </TabsContent>
 
+      <TabsContent value="feedback" className="space-y-4">
         <FeedbackCard user={user} buses={buses} />
-      </div>
-    </div>
+      </TabsContent>
+    </Tabs>
   );
 }
 
