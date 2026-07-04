@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Play, Square, Navigation } from "lucide-react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { emitBusNotification } from "@/lib/notifications.functions";
 
 type Assignment = { bus_id: string; buses: { id: string; bus_number: string; route_id: string | null; status: string } | null };
 type Stop = { name: string; lat: number; lng: number; order?: number };
@@ -18,6 +20,17 @@ export function DriverDashboard({ user }: { user: User }) {
   const [tripId, setTripId] = useState<string | null>(null);
   const [pos, setPos] = useState<{ lat: number; lng: number; speed?: number | null; heading?: number | null } | null>(null);
   const watchIdRef = useRef<number | null>(null);
+  const emittedRef = useRef<Set<string>>(new Set());
+  const notify = useServerFn(emitBusNotification);
+
+  function haversineM(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
+    const R = 6371000;
+    const toRad = (d: number) => (d * Math.PI) / 180;
+    const dLat = toRad(b.lat - a.lat);
+    const dLng = toRad(b.lng - a.lng);
+    const s = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(s));
+  }
 
   useEffect(() => {
     supabase
@@ -63,6 +76,27 @@ export function DriverDashboard({ user }: { user: User }) {
     };
     setPos({ lat: coords.latitude, lng: coords.longitude, speed: payload.speed, heading: coords.heading });
     await supabase.from("bus_locations").upsert(payload, { onConflict: "bus_id" });
+
+    // Auto proximity alerts to registered students/faculty per stop
+    if (tripId) {
+      for (const s of stops) {
+        const d = haversineM({ lat: coords.latitude, lng: coords.longitude }, s);
+        if (d <= 500 && d > 60) {
+          const key = `${tripId}:approach:${s.name}`;
+          if (!emittedRef.current.has(key)) {
+            emittedRef.current.add(key);
+            notify({ data: { busId, type: "approaching_stop", stopName: s.name, distanceM: Math.round(d) } }).catch(() => {});
+          }
+        }
+        if (d <= 60) {
+          const key = `${tripId}:reached:${s.name}`;
+          if (!emittedRef.current.has(key)) {
+            emittedRef.current.add(key);
+            notify({ data: { busId, type: "reached_stop", stopName: s.name } }).catch(() => {});
+          }
+        }
+      }
+    }
   }
 
   async function startTrip() {
@@ -71,7 +105,9 @@ export function DriverDashboard({ user }: { user: User }) {
     const { data, error } = await supabase.from("trips").insert({ bus_id: busId, driver_id: user.id }).select("id").single();
     if (error) return toast.error(error.message);
     setTripId(data.id);
+    emittedRef.current = new Set();
     await supabase.from("buses").update({ status: "running" }).eq("id", busId);
+    notify({ data: { busId, type: "trip_started" } }).catch(() => {});
     watchIdRef.current = navigator.geolocation.watchPosition(
       (p) => pushLocation(p.coords),
       (err) => toast.error("GPS: " + err.message),
@@ -86,6 +122,7 @@ export function DriverDashboard({ user }: { user: User }) {
     watchIdRef.current = null;
     await supabase.from("trips").update({ status: "completed", ended_at: new Date().toISOString() }).eq("id", tripId);
     if (busId) await supabase.from("buses").update({ status: "completed" }).eq("id", busId);
+    if (busId) notify({ data: { busId, type: "trip_completed" } }).catch(() => {});
     setTripId(null);
     toast.success("Trip ended");
   }
@@ -99,6 +136,7 @@ export function DriverDashboard({ user }: { user: User }) {
       created_by: user.id,
     });
     if (error) return toast.error(error.message);
+    notify({ data: { busId, type: "sos", message: "Driver has flagged an emergency." } }).catch(() => {});
     toast.success("Emergency alert sent to admin");
   }
 
