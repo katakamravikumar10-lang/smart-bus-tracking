@@ -43,13 +43,13 @@ function AuthPage() {
         <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-accent/30 blur-3xl" />
         <div className="absolute -bottom-32 -left-24 h-96 w-96 rounded-full bg-white/10 blur-3xl" />
 
-        <div className="relative z-10 flex items-center gap-3">
-          <div className="rounded-xl bg-white p-1.5 shadow-lg">
-            <img src={collegeLogo.url} alt="Narayana Engineering College logo" className="h-12 w-12 object-contain" />
+        <div className="relative z-10 flex items-center gap-4">
+          <div className="rounded-xl bg-white p-2 shadow-lg">
+            <img src={collegeLogo.url} alt="Narayana Engineering College logo" className="h-16 w-16 object-contain" />
           </div>
           <div>
-            <div className="text-lg font-bold leading-tight">Narayana Engineering College</div>
-            <div className="text-xs opacity-80">Gudur · Autonomous · Approved by AICTE</div>
+            <div className="text-2xl font-bold leading-tight">Narayana Engineering College</div>
+            <div className="text-sm opacity-80">Gudur · Autonomous · Approved by AICTE</div>
           </div>
         </div>
 
