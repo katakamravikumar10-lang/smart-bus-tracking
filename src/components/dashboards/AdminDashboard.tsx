@@ -344,12 +344,13 @@ function AnnouncementsTab({ routes }: { routes: RouteRow[] }) {
   async function send() {
     if (!title.trim() || !body.trim()) return toast.error("Fill title and body");
     const { data: u } = await supabase.auth.getUser();
+    if (!u.user) return toast.error("You must be signed in");
     const { error } = await supabase.from("announcements").insert({
       title: title.trim(), body: body.trim(),
       target_role: role === "all" ? null : (role as "student" | "faculty" | "driver"),
       route_id: routeId || null,
       is_emergency: emergency,
-      created_by: u.user?.id,
+      created_by: u.user.id,
     });
     if (error) return toast.error(error.message);
     setTitle(""); setBody(""); setEmergency(false);
