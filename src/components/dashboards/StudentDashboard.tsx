@@ -10,7 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Bus, MapPin, Bell, MessageSquare } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Bus, MapPin, Bell, MessageSquare, ArrowLeft, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 
 type BusRow = { id: string; bus_number: string; route_id: string | null; status: string };
