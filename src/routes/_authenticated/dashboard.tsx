@@ -18,7 +18,7 @@ function DashboardPage() {
   const { role, loading: roleLoading } = useRole(user);
   const profile = useProfile(user);
 
-  if (loading || roleLoading) {
+  if (loading || roleLoading || !user) {
     return (
       <div className="min-h-screen bg-background">
         <BrandHeader />
@@ -31,10 +31,10 @@ function DashboardPage() {
     <div className="min-h-screen bg-background">
       <BrandHeader subtitle={roleLabel(role) + (profile?.full_name ? ` · ${profile.full_name}` : "")} />
       <main className="mx-auto max-w-7xl px-4 py-6">
-        {role === "admin" && <AdminDashboard user={user!} />}
-        {role === "driver" && <DriverDashboard user={user!} />}
-        {role === "faculty" && <FacultyDashboard user={user!} />}
-        {(role === "student" || !role) && <StudentDashboard user={user!} />}
+        {role === "admin" && <AdminDashboard user={user} />}
+        {role === "driver" && <DriverDashboard user={user} />}
+        {role === "faculty" && <FacultyDashboard user={user} />}
+        {(role === "student" || !role) && <StudentDashboard user={user} />}
       </main>
     </div>
   );
