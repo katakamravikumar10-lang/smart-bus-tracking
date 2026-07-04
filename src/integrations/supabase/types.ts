@@ -20,6 +20,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
+          is_demo: boolean
           is_emergency: boolean
           route_id: string | null
           target_role: Database["public"]["Enums"]["app_role"] | null
@@ -30,6 +31,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          is_demo?: boolean
           is_emergency?: boolean
           route_id?: string | null
           target_role?: Database["public"]["Enums"]["app_role"] | null
@@ -40,6 +42,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          is_demo?: boolean
           is_emergency?: boolean
           route_id?: string | null
           target_role?: Database["public"]["Enums"]["app_role"] | null
@@ -100,6 +103,7 @@ export type Database = {
           capacity: number
           created_at: string
           id: string
+          is_demo: boolean
           notes: string | null
           route_id: string | null
           status: Database["public"]["Enums"]["bus_status"]
@@ -111,6 +115,7 @@ export type Database = {
           capacity?: number
           created_at?: string
           id?: string
+          is_demo?: boolean
           notes?: string | null
           route_id?: string | null
           status?: Database["public"]["Enums"]["bus_status"]
@@ -122,6 +127,7 @@ export type Database = {
           capacity?: number
           created_at?: string
           id?: string
+          is_demo?: boolean
           notes?: string | null
           route_id?: string | null
           status?: Database["public"]["Enums"]["bus_status"]
@@ -214,6 +220,7 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          is_demo: boolean
           phone: string | null
           roll_no: string | null
           updated_at: string
@@ -224,6 +231,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          is_demo?: boolean
           phone?: string | null
           roll_no?: string | null
           updated_at?: string
@@ -234,6 +242,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          is_demo?: boolean
           phone?: string | null
           roll_no?: string | null
           updated_at?: string
@@ -246,6 +255,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          is_demo: boolean
           name: string
           stops: Json
           updated_at: string
@@ -255,6 +265,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_demo?: boolean
           name: string
           stops?: Json
           updated_at?: string
@@ -264,6 +275,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_demo?: boolean
           name?: string
           stops?: Json
           updated_at?: string
@@ -308,6 +320,7 @@ export type Database = {
           driver_id: string
           ended_at: string | null
           id: string
+          is_demo: boolean
           notes: string | null
           started_at: string
           status: Database["public"]["Enums"]["trip_status"]
@@ -317,6 +330,7 @@ export type Database = {
           driver_id: string
           ended_at?: string | null
           id?: string
+          is_demo?: boolean
           notes?: string | null
           started_at?: string
           status?: Database["public"]["Enums"]["trip_status"]
@@ -326,6 +340,7 @@ export type Database = {
           driver_id?: string
           ended_at?: string | null
           id?: string
+          is_demo?: boolean
           notes?: string | null
           started_at?: string
           status?: Database["public"]["Enums"]["trip_status"]
