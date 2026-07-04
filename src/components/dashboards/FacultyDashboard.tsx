@@ -5,6 +5,7 @@ import { BusMap } from "@/components/BusMap";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Bus, Bell } from "lucide-react";
+import { toast } from "sonner";
 
 type BusRow = { id: string; bus_number: string; route_id: string | null; status: string };
 type RouteRow = { id: string; name: string; stops: unknown };
@@ -39,8 +40,17 @@ export function FacultyDashboard({ user }: { user: User }) {
         if (n?.bus_id) setLocs((prev) => ({ ...prev, [n.bus_id]: n }));
       })
       .subscribe();
+    const annCh = supabase
+      .channel("faculty-announce")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "announcements" }, (payload) => {
+        const a = payload.new as { id: string; title: string; body: string; created_at: string; is_emergency: boolean };
+        setAnnouncements((prev) => [a, ...prev].slice(0, 10));
+        toast(a.title, { description: a.body });
+      })
+      .subscribe();
     return () => {
       supabase.removeChannel(ch);
+      supabase.removeChannel(annCh);
     };
   }, []);
 
