@@ -7,7 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import logo from "@/assets/logo.png";
+import collegeLogo from "@/assets/college-logo.png.asset.json";
+import collegeBanner from "@/assets/college-banner.jpg.asset.json";
+import founderImg from "@/assets/founder.webp.asset.json";
 import { MailCheck, RefreshCw, ArrowLeft } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
@@ -35,34 +37,114 @@ function AuthPage() {
   if (checking) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-secondary via-background to-secondary flex items-center justify-center px-4 py-10">
-      <div className="w-full max-w-md">
-        <div className="mb-6 flex flex-col items-center text-center">
-          <img src={logo} alt="Narayana Engineering College" width={72} height={72} className="mb-3" />
-          <h1 className="text-2xl font-bold text-primary">Narayana Engineering College</h1>
-          <p className="text-sm text-muted-foreground">Smart Bus Tracking · Gudur</p>
+    <div className="min-h-screen bg-secondary/40 lg:grid lg:grid-cols-2">
+      {/* Left: brand / founder panel */}
+      <div className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-gradient-to-br from-primary via-primary to-primary/80 text-primary-foreground p-10">
+        <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-accent/30 blur-3xl" />
+        <div className="absolute -bottom-32 -left-24 h-96 w-96 rounded-full bg-white/10 blur-3xl" />
+
+        <div className="relative z-10 flex items-center gap-3">
+          <div className="rounded-xl bg-white p-1.5 shadow-lg">
+            <img src={collegeLogo.url} alt="Narayana Engineering College logo" className="h-12 w-12 object-contain" />
+          </div>
+          <div>
+            <div className="text-lg font-bold leading-tight">Narayana Engineering College</div>
+            <div className="text-xs opacity-80">Gudur · Autonomous · Approved by AICTE</div>
+          </div>
         </div>
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-lg shadow-primary/5">
-          {pendingEmail ? (
-            <VerifyPending email={pendingEmail} onBack={() => setPendingEmail(null)} />
-          ) : (
-            <Tabs defaultValue="signin">
-              <TabsList className="grid w-full grid-cols-2 mb-4">
-                <TabsTrigger value="signin">Sign in</TabsTrigger>
-                <TabsTrigger value="signup">Register</TabsTrigger>
-              </TabsList>
-              <TabsContent value="signin">
-                <SignInForm onUnverified={setPendingEmail} />
-              </TabsContent>
-              <TabsContent value="signup">
-                <SignUpForm onPending={setPendingEmail} />
-              </TabsContent>
-            </Tabs>
-          )}
+
+        <div className="relative z-10 flex items-end gap-6">
+          <div className="relative">
+            <div className="absolute inset-0 -m-2 rounded-2xl bg-accent/40 blur-2xl" />
+            <img
+              src={founderImg.url}
+              alt="Dr. Ponguru Narayana, Founder"
+              className="relative h-56 w-44 rounded-2xl object-cover shadow-2xl ring-4 ring-white/20"
+            />
+          </div>
+          <div className="pb-2">
+            <div className="text-[11px] uppercase tracking-widest text-accent">Founder</div>
+            <div className="mt-1 text-2xl font-bold leading-tight">Dr. Ponguru Narayana</div>
+            <div className="mt-2 h-0.5 w-16 bg-accent" />
+            <p className="mt-3 max-w-xs text-sm opacity-90">
+              “Committed to excellence in engineering education.”
+            </p>
+          </div>
         </div>
-        <p className="mt-4 text-center text-xs text-muted-foreground">
-          Trouble signing in? Contact the college transport office.
-        </p>
+
+        <div className="relative z-10">
+          <div className="rounded-xl border border-white/20 bg-white/10 p-4 backdrop-blur">
+            <div className="text-sm font-semibold">Smart Bus Tracking System</div>
+            <p className="mt-1 text-xs opacity-85">
+              Live GPS · Arrival alerts · Route management for students, faculty, drivers and admins.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Right: auth panel */}
+      <div className="flex min-h-screen items-center justify-center px-4 py-8">
+        <div className="w-full max-w-md">
+          {/* Mobile banner */}
+          <div className="lg:hidden mb-6 overflow-hidden rounded-2xl border border-border bg-card shadow-md">
+            <div className="relative bg-gradient-to-br from-primary to-primary/80 p-4 text-primary-foreground">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-white p-1">
+                  <img src={collegeLogo.url} alt="NEC Logo" className="h-10 w-10 object-contain" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-sm font-bold leading-tight">Narayana Engineering College</div>
+                  <div className="text-[11px] opacity-85">Gudur · Autonomous</div>
+                </div>
+              </div>
+              <img
+                src={collegeBanner.url}
+                alt="NEC accreditations"
+                className="mt-3 h-14 w-full rounded-md bg-white object-contain p-1"
+              />
+            </div>
+            <div className="flex items-center gap-3 p-3">
+              <img
+                src={founderImg.url}
+                alt="Dr. Ponguru Narayana"
+                className="h-14 w-12 rounded-md object-cover ring-2 ring-primary/20"
+              />
+              <div className="leading-tight">
+                <div className="text-[10px] uppercase tracking-wider text-accent-foreground/70">Founder</div>
+                <div className="text-sm font-semibold text-primary">Dr. Ponguru Narayana</div>
+                <div className="text-[11px] text-muted-foreground">Smart Bus Tracking</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-5 hidden lg:block text-center">
+            <h1 className="text-2xl font-bold text-primary">Welcome back</h1>
+            <p className="text-sm text-muted-foreground">Sign in to the college bus tracker</p>
+          </div>
+
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-xl shadow-primary/5">
+            {pendingEmail ? (
+              <VerifyPending email={pendingEmail} onBack={() => setPendingEmail(null)} />
+            ) : (
+              <Tabs defaultValue="signin">
+                <TabsList className="grid w-full grid-cols-2 mb-4">
+                  <TabsTrigger value="signin">Sign in</TabsTrigger>
+                  <TabsTrigger value="signup">Register</TabsTrigger>
+                </TabsList>
+                <TabsContent value="signin">
+                  <SignInForm onUnverified={setPendingEmail} />
+                </TabsContent>
+                <TabsContent value="signup">
+                  <SignUpForm onPending={setPendingEmail} />
+                </TabsContent>
+              </Tabs>
+            )}
+          </div>
+
+          <p className="mt-4 text-center text-xs text-muted-foreground">
+            Trouble signing in? Contact the college transport office.
+          </p>
+        </div>
       </div>
     </div>
   );
