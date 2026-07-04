@@ -21,15 +21,24 @@ declare global {
 let mapsPromise: Promise<void> | null = null;
 function loadMaps(): Promise<void> {
   if (typeof window === "undefined") return Promise.resolve();
-  if (window.google?.maps) return Promise.resolve();
+  if (window.google?.maps?.Map) return Promise.resolve();
   if (mapsPromise) return mapsPromise;
-  mapsPromise = new Promise((resolve) => {
+  mapsPromise = new Promise((resolve, reject) => {
     const key = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
     const channel = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID;
-    window.__initBusMap = () => resolve();
+    window.__initBusMap = async () => {
+      try {
+        await google.maps.importLibrary("maps");
+        await google.maps.importLibrary("marker");
+        resolve();
+      } catch (e) {
+        reject(e);
+      }
+    };
     const s = document.createElement("script");
     s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&loading=async&callback=__initBusMap&channel=${channel}`;
     s.async = true;
+    s.onerror = () => reject(new Error("Failed to load Google Maps"));
     document.head.appendChild(s);
   });
   return mapsPromise;
