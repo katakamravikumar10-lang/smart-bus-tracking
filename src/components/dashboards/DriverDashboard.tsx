@@ -196,6 +196,33 @@ export function DriverDashboard({ user }: { user: User }) {
             <p className="text-sm text-muted-foreground">You have no bus assignment yet. Please contact the transport office.</p>
           ) : (
             <>
+              {(gpsState === "denied" || gpsState === "unavailable") && (
+                <div className="rounded-lg border border-destructive/50 bg-destructive/5 p-3">
+                  <div className="flex items-start gap-2">
+                    <MapPin className="mt-0.5 h-4 w-4 text-destructive" />
+                    <div className="flex-1 space-y-2 text-sm">
+                      <div className="font-medium text-destructive">Location sharing is off</div>
+                      <p className="text-muted-foreground">
+                        Your phone's location is used as this bus's live location. Please enable location access so students and faculty can track Bus {assignment.buses?.bus_number}.
+                      </p>
+                      <Button size="sm" variant="outline" onClick={requestLocationAgain}>
+                        Enable location
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {gpsState === "prompting" && (
+                <div className="rounded-lg border border-border bg-muted/40 p-3 text-sm text-muted-foreground">
+                  Requesting location permission… please allow it in the browser prompt.
+                </div>
+              )}
+              {gpsState === "granted" && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span className="inline-block h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                  Sharing live location as Bus {assignment.buses?.bus_number}
+                </div>
+              )}
               <div className="flex flex-wrap items-center gap-3 text-sm">
                 <Badge className="bg-primary text-primary-foreground">Bus {assignment.buses?.bus_number}</Badge>
                 {routeName && <Badge variant="outline">{routeName}</Badge>}
