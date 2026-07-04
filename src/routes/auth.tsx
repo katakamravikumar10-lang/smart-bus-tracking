@@ -155,6 +155,10 @@ function SignInForm({ onUnverified }: { onUnverified: (email: string) => void })
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [forgotMode, setForgotMode] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotSent, setForgotSent] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -171,6 +175,62 @@ function SignInForm({ onUnverified }: { onUnverified: (email: string) => void })
     } else navigate({ to: "/dashboard", replace: true });
   }
 
+  async function handleForgotSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setForgotLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setForgotLoading(false);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      setForgotSent(true);
+      toast.success("Password reset link sent. Check your email.");
+    }
+  }
+
+  if (forgotSent) {
+    return (
+      <div className="space-y-4 text-center">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-secondary text-primary">
+          <MailCheck className="h-7 w-7" />
+        </div>
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">Check your email</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            We sent a password reset link to
+          </p>
+          <p className="mt-0.5 text-sm font-medium text-foreground break-all">{forgotEmail}</p>
+        </div>
+        <Button type="button" variant="ghost" className="w-full" onClick={() => { setForgotMode(false); setForgotSent(false); setForgotEmail(""); }}>
+          <ArrowLeft className="mr-2 h-4 w-4" /> Back to sign in
+        </Button>
+      </div>
+    );
+  }
+
+  if (forgotMode) {
+    return (
+      <form onSubmit={handleForgotSubmit} className="space-y-4">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">Reset your password</h2>
+          <p className="text-sm text-muted-foreground">Enter your email and we will send you a reset link.</p>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="forgot-email">Email</Label>
+          <Input id="forgot-email" type="email" required value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} placeholder="you@narayana.edu" />
+        </div>
+        <Button type="submit" className="w-full" disabled={forgotLoading}>
+          {forgotLoading ? "Sending…" : "Send reset link"}
+        </Button>
+        <Button type="button" variant="ghost" className="w-full" onClick={() => setForgotMode(false)}>
+          <ArrowLeft className="mr-2 h-4 w-4" /> Back to sign in
+        </Button>
+      </form>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
@@ -178,7 +238,12 @@ function SignInForm({ onUnverified }: { onUnverified: (email: string) => void })
         <Input id="signin-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@narayana.edu" />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="signin-password">Password</Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="signin-password">Password</Label>
+          <button type="button" onClick={() => setForgotMode(true)} className="text-xs text-primary hover:underline">
+            Forgot password?
+          </button>
+        </div>
         <Input id="signin-password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
       </div>
       <Button type="submit" className="w-full" disabled={loading}>
