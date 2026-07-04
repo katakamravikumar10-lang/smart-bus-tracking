@@ -174,7 +174,7 @@ function SignInForm({ onUnverified }: { onUnverified: (email: string) => void })
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="signin-email">College Email</Label>
+        <Label htmlFor="signin-email">Enter your register email</Label>
         <Input id="signin-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@narayana.edu" />
       </div>
       <div className="space-y-2">
