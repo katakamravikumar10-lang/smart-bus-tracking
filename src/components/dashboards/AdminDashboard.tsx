@@ -88,13 +88,15 @@ export function AdminDashboard({ user }: { user: User }) {
       </Card>
 
       <Tabs defaultValue="buses">
-        <TabsList>
-          <TabsTrigger value="buses"><Bus className="mr-1 h-4 w-4" />Buses</TabsTrigger>
-          <TabsTrigger value="routes"><RouteIcon className="mr-1 h-4 w-4" />Routes</TabsTrigger>
-          <TabsTrigger value="drivers"><Users className="mr-1 h-4 w-4" />Drivers</TabsTrigger>
-          <TabsTrigger value="announce"><Megaphone className="mr-1 h-4 w-4" />Announcements</TabsTrigger>
-          <TabsTrigger value="demo"><FlaskConical className="mr-1 h-4 w-4" />Demo Mode</TabsTrigger>
-        </TabsList>
+        <div className="w-full overflow-x-auto">
+          <TabsList className="w-max">
+            <TabsTrigger value="buses"><Bus className="mr-1 h-4 w-4" />Buses</TabsTrigger>
+            <TabsTrigger value="routes"><RouteIcon className="mr-1 h-4 w-4" />Routes</TabsTrigger>
+            <TabsTrigger value="drivers"><Users className="mr-1 h-4 w-4" />Drivers</TabsTrigger>
+            <TabsTrigger value="announce"><Megaphone className="mr-1 h-4 w-4" />Announcements</TabsTrigger>
+            <TabsTrigger value="demo"><FlaskConical className="mr-1 h-4 w-4" />Demo Mode</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="buses"><BusesTab buses={buses} routes={routes} onChange={refreshAll} /></TabsContent>
         <TabsContent value="routes"><RoutesTab routes={routes} onChange={refreshAll} /></TabsContent>
