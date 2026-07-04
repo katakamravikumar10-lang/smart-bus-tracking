@@ -1,3 +1,4 @@
+/// <reference types="google.maps" />
 import { useEffect, useRef, useState } from "react";
 
 type Bus = {
@@ -13,7 +14,6 @@ type Stop = { name: string; lat: number; lng: number; order?: number };
 
 declare global {
   interface Window {
-    google?: typeof google;
     __initBusMap?: () => void;
   }
 }
