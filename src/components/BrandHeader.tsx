@@ -2,7 +2,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import logo from "@/assets/logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { LogOut, User as UserIcon, Settings as SettingsIcon } from "lucide-react";
+import { LogOut, User as UserIcon, Settings as SettingsIcon, LayoutDashboard } from "lucide-react";
 import { NotificationsBell } from "@/components/NotificationsBell";
 import { useSession, useProfile } from "@/lib/auth-hooks";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -68,8 +68,7 @@ export function BrandHeader({ subtitle, showSignOut = true }: { subtitle?: strin
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => navigate({ to: "/dashboard" })}>
-                  <UserIcon className="mr-2 h-4 w-4 opacity-0" />
-                  <span className="-ml-6">Dashboard</span>
+                  <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate({ to: "/profile" })}>
                   <UserIcon className="mr-2 h-4 w-4" /> Profile
