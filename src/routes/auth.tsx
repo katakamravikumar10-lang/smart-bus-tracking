@@ -37,7 +37,7 @@ function AuthPage() {
   if (checking) return null;
 
   return (
-    <div className="min-h-screen bg-secondary/40 lg:grid lg:grid-cols-2">
+    <div className="min-h-dvh bg-secondary/40 lg:grid lg:grid-cols-2">
       {/* Left: brand / founder panel */}
       <div className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-gradient-to-br from-primary via-primary to-primary/80 text-primary-foreground p-10">
         <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-accent/30 blur-3xl" />
@@ -83,7 +83,7 @@ function AuthPage() {
       </div>
 
       {/* Right: auth panel */}
-      <div className="flex min-h-screen items-center justify-center px-4 py-8">
+      <div className="flex min-h-dvh items-center justify-center px-4 py-8">
         <div className="w-full max-w-md">
           {/* Mobile banner */}
           <div className="lg:hidden mb-6 overflow-hidden rounded-2xl border border-border bg-card shadow-md">

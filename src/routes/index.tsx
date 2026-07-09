@@ -20,7 +20,7 @@ function Index() {
   const primaryHref = authed ? "/dashboard" : "/auth";
   const primaryLabel = authed ? "Open dashboard" : "Sign in";
   return (
-    <div className="min-h-screen bg-gradient-to-br from-secondary via-background to-secondary">
+    <div className="min-h-dvh bg-gradient-to-br from-secondary via-background to-secondary">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
         <div className="flex items-center gap-3">
           <img src={logo} alt="Narayana Engineering College" width={48} height={48} />

@@ -56,7 +56,7 @@ function ResetPasswordPage() {
 
   if (!checked) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-secondary/40 px-4">
+      <div className="flex min-h-dvh items-center justify-center bg-secondary/40 px-4">
         <p className="text-sm text-muted-foreground">Checking link…</p>
       </div>
     );
@@ -64,7 +64,7 @@ function ResetPasswordPage() {
 
   if (!validRecovery) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-secondary/40 px-4">
+      <div className="flex min-h-dvh items-center justify-center bg-secondary/40 px-4">
         <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-xl text-center">
           <h1 className="text-xl font-semibold text-foreground">Invalid or expired link</h1>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -79,7 +79,7 @@ function ResetPasswordPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-secondary/40 px-4">
+    <div className="flex min-h-dvh items-center justify-center bg-secondary/40 px-4">
       <div className="w-full max-w-md">
         <div className="mb-5 text-center">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-secondary text-primary">

@@ -21,7 +21,7 @@ function DashboardPage() {
 
   if (loading || roleLoading || !user) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-dvh bg-background">
         <BrandHeader />
         <main className="mx-auto max-w-7xl px-4 py-6">
           <DashboardSkeleton />
@@ -31,7 +31,7 @@ function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <BrandHeader subtitle={roleLabel(role) + (profile?.full_name ? ` · ${profile.full_name}` : "")} />
       <main className="mx-auto max-w-7xl px-4 py-6">
         {role === "admin" && <AdminDashboard user={user} />}

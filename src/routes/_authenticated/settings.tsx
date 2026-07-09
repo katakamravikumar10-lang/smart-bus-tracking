@@ -51,7 +51,7 @@ function SettingsPage() {
 
   if (loading || !user) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-dvh bg-background">
         <BrandHeader subtitle="Settings" />
         <div className="mx-auto max-w-3xl px-4 py-6 text-sm text-muted-foreground">Loading…</div>
       </div>
@@ -92,7 +92,7 @@ function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <BrandHeader subtitle="Settings" />
       <main className="mx-auto max-w-3xl px-4 py-6 space-y-6">
         {/* Appearance */}
