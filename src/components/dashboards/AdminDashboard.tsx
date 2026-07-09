@@ -64,8 +64,23 @@ export function AdminDashboard({ user }: { user: User }) {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [feedback, setFeedback] = useState<Feedback[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tabHistory, setTabHistory] = useState<string[]>(["buses"]);
-  const [tabIndex, setTabIndex] = useState(0);
+  const [tabHistory, setTabHistory] = useState<string[]>(() => {
+    if (typeof window === "undefined") return ["buses"];
+    try {
+      const raw = window.sessionStorage.getItem("admin.dashboard.tabHistory");
+      if (raw) {
+        const parsed = JSON.parse(raw) as string[];
+        if (Array.isArray(parsed) && parsed.length) return parsed;
+      }
+    } catch { /* ignore */ }
+    return ["buses"];
+  });
+  const [tabIndex, setTabIndex] = useState(() => {
+    if (typeof window === "undefined") return 0;
+    const raw = window.sessionStorage.getItem("admin.dashboard.tabIndex");
+    const n = raw ? Number(raw) : 0;
+    return Number.isFinite(n) && n >= 0 ? n : 0;
+  });
   const currentTab = tabHistory[tabIndex];
 
   function goToTab(v: string) {
@@ -75,6 +90,15 @@ export function AdminDashboard({ user }: { user: User }) {
     setTabHistory(next);
     setTabIndex(next.length - 1);
   }
+
+  // Persist tab state so returning from Profile / Settings restores context.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.sessionStorage.setItem("admin.dashboard.tabHistory", JSON.stringify(tabHistory));
+      window.sessionStorage.setItem("admin.dashboard.tabIndex", String(tabIndex));
+    } catch { /* ignore quota */ }
+  }, [tabHistory, tabIndex]);
 
   async function refreshAll() {
     setLoading(true);

@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useRole } from "@/lib/auth-hooks";
 import { BrandHeader } from "@/components/BrandHeader";
+import { PageHeader } from "@/components/nav/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -92,11 +93,11 @@ function ProfilePage() {
 
   if (sessionLoading || !user) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-dvh bg-background">
         <BrandHeader subtitle="Profile" />
-        <div className="mx-auto max-w-3xl px-4 py-6">
+        <main className="mx-auto max-w-3xl px-4 py-6">
           <Skeleton className="h-64 w-full rounded-xl" />
-        </div>
+        </main>
       </div>
     );
   }
@@ -161,9 +162,17 @@ function ProfilePage() {
   const isStudent = role === "student" || !role;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <BrandHeader subtitle="Profile" />
       <main className="mx-auto max-w-3xl px-4 py-6 space-y-6">
+        <PageHeader
+          title="Profile"
+          description="Manage your personal information, avatar, and password."
+          breadcrumbs={[
+            { label: "Dashboard", to: "/dashboard" },
+            { label: "Profile" },
+          ]}
+        />
         <Card>
           <CardHeader className="flex-row items-start gap-4 space-y-0">
             <div className="relative">

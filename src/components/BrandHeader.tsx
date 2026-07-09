@@ -2,10 +2,11 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import logo from "@/assets/logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { LogOut, User as UserIcon, Settings as SettingsIcon } from "lucide-react";
+import { LogOut, User as UserIcon, Settings as SettingsIcon, LayoutDashboard } from "lucide-react";
 import { NotificationsBell } from "@/components/NotificationsBell";
 import { useSession, useProfile } from "@/lib/auth-hooks";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { MobileNavDrawer } from "@/components/MobileNavDrawer";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,15 +29,24 @@ export function BrandHeader({ subtitle, showSignOut = true }: { subtitle?: strin
   }
   return (
     <header className="sticky top-0 z-30 border-b border-border/60 bg-background/80 backdrop-blur">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3">
-        <Link to="/" className="flex items-center gap-3">
-          <img src={logo} alt="Narayana Bus Tracker" width={40} height={40} className="rounded" />
-          <div className="leading-tight">
-            <div className="text-sm font-semibold text-primary">Narayana Engineering College</div>
-            <div className="text-xs text-muted-foreground">{subtitle ?? "Smart Bus Tracking · Gudur"}</div>
-          </div>
-        </Link>
-        <div className="flex items-center gap-1">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-3">
+        <div className="flex min-w-0 items-center gap-1">
+          {user && (
+            <MobileNavDrawer
+              userEmail={user.email ?? null}
+              fullName={profile?.full_name ?? null}
+              avatarUrl={avatarUrl}
+            />
+          )}
+          <Link to="/" className="flex min-w-0 items-center gap-3">
+            <img src={logo} alt="Narayana Bus Tracker" width={40} height={40} className="shrink-0 rounded" />
+            <div className="min-w-0 leading-tight">
+              <div className="truncate text-sm font-semibold text-primary">Narayana Engineering College</div>
+              <div className="truncate text-xs text-muted-foreground">{subtitle ?? "Smart Bus Tracking · Gudur"}</div>
+            </div>
+          </Link>
+        </div>
+        <div className="flex shrink-0 items-center gap-1">
           {user && <NotificationsBell user={user} />}
           <ThemeToggle />
           {user && showSignOut && (
@@ -57,6 +67,9 @@ export function BrandHeader({ subtitle, showSignOut = true }: { subtitle?: strin
                   <div className="truncate text-xs font-normal text-muted-foreground">{user.email}</div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate({ to: "/dashboard" })}>
+                  <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate({ to: "/profile" })}>
                   <UserIcon className="mr-2 h-4 w-4" /> Profile
                 </DropdownMenuItem>
