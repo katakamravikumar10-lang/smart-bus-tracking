@@ -6,6 +6,7 @@ import { DriverDashboard } from "@/components/dashboards/DriverDashboard";
 import { FacultyDashboard } from "@/components/dashboards/FacultyDashboard";
 import { AdminDashboard } from "@/components/dashboards/AdminDashboard";
 import { DashboardSkeleton } from "@/components/DashboardSkeleton";
+import { AppFooter } from "@/components/AppFooter";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -39,6 +40,7 @@ function DashboardPage() {
         {role === "faculty" && <FacultyDashboard user={user} />}
         {(role === "student" || !role) && <StudentDashboard user={user} />}
       </main>
+      <AppFooter />
     </div>
   );
 }

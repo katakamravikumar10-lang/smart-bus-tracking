@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { Bell } from "lucide-react";
@@ -96,6 +97,11 @@ export function NotificationsBell({ user }: { user: User }) {
               </div>
             </div>
           ))}
+        </div>
+        <div className="border-t px-3 py-2 text-center">
+          <Link to="/notifications" className="text-xs font-medium text-primary hover:underline">
+            View all notifications
+          </Link>
         </div>
       </PopoverContent>
     </Popover>

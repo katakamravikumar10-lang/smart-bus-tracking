@@ -2,7 +2,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import logo from "@/assets/logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { LogOut, User as UserIcon, Settings as SettingsIcon, LayoutDashboard } from "lucide-react";
+import { LogOut, User as UserIcon, Settings as SettingsIcon, LayoutDashboard, LifeBuoy, Info } from "lucide-react";
 import { NotificationsBell } from "@/components/NotificationsBell";
 import { useSession, useProfile } from "@/lib/auth-hooks";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -75,6 +75,12 @@ export function BrandHeader({ subtitle, showSignOut = true }: { subtitle?: strin
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}>
                   <SettingsIcon className="mr-2 h-4 w-4" /> Settings
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate({ to: "/help" })}>
+                  <LifeBuoy className="mr-2 h-4 w-4" /> Help & Support
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate({ to: "/about" })}>
+                  <Info className="mr-2 h-4 w-4" /> About
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={signOut}>

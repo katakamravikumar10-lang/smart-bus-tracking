@@ -29,9 +29,12 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useTheme } from "@/lib/theme";
+import { APP_VERSION } from "@/lib/version";
+import { AppFooter } from "@/components/AppFooter";
+import { Link } from "@tanstack/react-router";
 import { useAppSettings } from "@/lib/app-settings";
 import { toast } from "sonner";
-import { Bell, Palette, ShieldAlert, Languages, Gauge } from "lucide-react";
+import { Bell, Palette, ShieldAlert, Languages, Gauge, Info, LifeBuoy } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({ meta: [{ title: "Settings · Narayana Bus Tracker" }] }),
@@ -265,7 +268,30 @@ function SettingsPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* About & version */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Info className="h-5 w-5 text-accent" /> About</CardTitle>
+            <CardDescription>Application information and support.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-wrap items-center justify-between gap-3 text-sm">
+            <div>
+              <div className="font-medium text-foreground">Narayana Bus Tracker</div>
+              <div className="text-xs text-muted-foreground">Version {APP_VERSION}</div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button asChild variant="outline" size="sm">
+                <Link to="/help"><LifeBuoy className="mr-2 h-4 w-4" /> Help & Support</Link>
+              </Button>
+              <Button asChild variant="outline" size="sm">
+                <Link to="/about"><Info className="mr-2 h-4 w-4" /> About</Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </main>
+      <AppFooter />
     </div>
   );
 }

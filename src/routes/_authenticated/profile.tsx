@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Camera, KeyRound, Save, LogOut } from "lucide-react";
 import { useAvatarUrl, avatarInitials } from "@/lib/avatar";
+import { AppFooter } from "@/components/AppFooter";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({ meta: [{ title: "Profile · Narayana Bus Tracker" }] }),
@@ -299,6 +300,7 @@ function ProfilePage() {
           </Button>
         </div>
       </main>
+      <AppFooter />
     </div>
   );
 }
