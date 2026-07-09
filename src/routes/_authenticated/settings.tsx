@@ -34,7 +34,7 @@ import { AppFooter } from "@/components/AppFooter";
 import { Link } from "@tanstack/react-router";
 import { useAppSettings } from "@/lib/app-settings";
 import { toast } from "sonner";
-import { Bell, Palette, ShieldAlert, Languages, Gauge, Info, LifeBuoy } from "lucide-react";
+import { Bell, Palette, ShieldAlert, Languages, Gauge, Info, LifeBuoy, FlaskConical } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({ meta: [{ title: "Settings · Narayana Bus Tracker" }] }),
