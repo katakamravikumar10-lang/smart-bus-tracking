@@ -2,13 +2,26 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import logo from "@/assets/logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
+import { LogOut, User as UserIcon, Settings as SettingsIcon } from "lucide-react";
 import { NotificationsBell } from "@/components/NotificationsBell";
-import { useSession } from "@/lib/auth-hooks";
+import { useSession, useProfile } from "@/lib/auth-hooks";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAvatarUrl, avatarInitials } from "@/lib/avatar";
 
 export function BrandHeader({ subtitle, showSignOut = true }: { subtitle?: string; showSignOut?: boolean }) {
   const navigate = useNavigate();
   const { user } = useSession();
+  const profile = useProfile(user);
+  const avatarUrl = useAvatarUrl(profile?.avatar_url);
   async function signOut() {
     await supabase.auth.signOut();
     navigate({ to: "/auth", replace: true });
@@ -25,10 +38,37 @@ export function BrandHeader({ subtitle, showSignOut = true }: { subtitle?: strin
         </Link>
         <div className="flex items-center gap-1">
           {user && <NotificationsBell user={user} />}
-          {showSignOut && (
-            <Button variant="ghost" size="sm" onClick={signOut}>
-              <LogOut className="mr-1 h-4 w-4" /> Sign out
-            </Button>
+          <ThemeToggle />
+          {user && showSignOut && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label="Account menu" className="rounded-full">
+                  <Avatar className="h-8 w-8">
+                    {avatarUrl && <AvatarImage src={avatarUrl} alt={profile?.full_name ?? "Account"} />}
+                    <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                      {avatarInitials(profile?.full_name ?? user.email)}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="truncate">
+                  <div className="text-sm font-medium">{profile?.full_name ?? "Account"}</div>
+                  <div className="truncate text-xs font-normal text-muted-foreground">{user.email}</div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate({ to: "/profile" })}>
+                  <UserIcon className="mr-2 h-4 w-4" /> Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}>
+                  <SettingsIcon className="mr-2 h-4 w-4" /> Settings
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={signOut}>
+                  <LogOut className="mr-2 h-4 w-4" /> Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
       </div>
