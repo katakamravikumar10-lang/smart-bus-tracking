@@ -14,6 +14,7 @@ export type AppSettings = {
 };
 
 const STORAGE_KEY = "nbt-app-settings";
+const CHANGE_EVENT = "nbt-app-settings-change";
 
 export const defaultSettings: AppSettings = {
   notifyBusArrival: true,
@@ -44,6 +45,13 @@ export function useAppSettings() {
   useEffect(() => {
     setSettings(readStored());
     setHydrated(true);
+    const onChange = () => setSettings(readStored());
+    window.addEventListener(CHANGE_EVENT, onChange);
+    window.addEventListener("storage", onChange);
+    return () => {
+      window.removeEventListener(CHANGE_EVENT, onChange);
+      window.removeEventListener("storage", onChange);
+    };
   }, []);
 
   function update<K extends keyof AppSettings>(key: K, value: AppSettings[K]) {
@@ -51,6 +59,7 @@ export function useAppSettings() {
       const next = { ...prev, [key]: value };
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+        window.dispatchEvent(new Event(CHANGE_EVENT));
       } catch {
         /* ignore */
       }
