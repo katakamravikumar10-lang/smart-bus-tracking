@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { DemoModeTab } from "@/components/dashboards/DemoModeTab";
+import { useAppSettings } from "@/lib/app-settings";
 import { StatCard } from "@/components/StatCard";
 import { FleetCharts } from "@/components/FleetCharts";
 import { DataTable, type Column } from "@/components/DataTable";
@@ -64,6 +65,8 @@ export function AdminDashboard({ user }: { user: User }) {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [feedback, setFeedback] = useState<Feedback[]>([]);
   const [loading, setLoading] = useState(true);
+  const { settings } = useAppSettings();
+  const demoEnabled = settings.demoModeEnabled;
   const [tabHistory, setTabHistory] = useState<string[]>(() => {
     if (typeof window === "undefined") return ["buses"];
     try {
@@ -82,6 +85,16 @@ export function AdminDashboard({ user }: { user: User }) {
     return Number.isFinite(n) && n >= 0 ? n : 0;
   });
   const currentTab = tabHistory[tabIndex];
+
+  // If demo mode is turned off while sitting on the demo tab, fall back to buses.
+  useEffect(() => {
+    if (!demoEnabled && currentTab === "demo") {
+      setTabHistory((h) => {
+        const next = h.map((t) => (t === "demo" ? "buses" : t));
+        return next;
+      });
+    }
+  }, [demoEnabled, currentTab]);
 
   function goToTab(v: string) {
     if (v === currentTab) return;
@@ -208,7 +221,9 @@ export function AdminDashboard({ user }: { user: User }) {
               <TabsTrigger value="announce"><Megaphone className="mr-1 h-4 w-4" />Announcements</TabsTrigger>
               <TabsTrigger value="trips"><History className="mr-1 h-4 w-4" />Trip History</TabsTrigger>
               <TabsTrigger value="reports"><MessageSquareWarning className="mr-1 h-4 w-4" />Reports</TabsTrigger>
-              <TabsTrigger value="demo"><FlaskConical className="mr-1 h-4 w-4" />Demo Mode</TabsTrigger>
+              {demoEnabled && (
+                <TabsTrigger value="demo"><FlaskConical className="mr-1 h-4 w-4" />Demo Mode</TabsTrigger>
+              )}
             </TabsList>
           </div>
         </div>
@@ -221,7 +236,9 @@ export function AdminDashboard({ user }: { user: User }) {
         <TabsContent value="announce"><AnnouncementsTab routes={routes} /></TabsContent>
         <TabsContent value="trips"><TripsTab trips={trips} buses={buses} drivers={drivers} loading={loading} /></TabsContent>
         <TabsContent value="reports"><ReportsTab feedback={feedback} buses={buses} loading={loading} onChange={refreshAll} /></TabsContent>
-        <TabsContent value="demo"><DemoModeTab onDataChange={refreshAll} /></TabsContent>
+        {demoEnabled && (
+          <TabsContent value="demo"><DemoModeTab onDataChange={refreshAll} /></TabsContent>
+        )}
       </Tabs>
     </div>
   );

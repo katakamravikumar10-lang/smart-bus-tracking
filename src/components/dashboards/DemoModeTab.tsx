@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Database, Play, Square, Trash2, FlaskConical } from "lucide-react";
 import { toast } from "sonner";
+import { useAppSettings } from "@/lib/app-settings";
 
 type BusRow = { id: string; bus_number: string; route_id: string | null; is_demo: boolean };
 type RouteRow = { id: string; name: string; stops: { name: string; lat: number; lng: number }[]; is_demo: boolean };
@@ -51,8 +52,11 @@ export function DemoModeTab({ onDataChange }: { onDataChange?: () => void } = {}
   const [busy, setBusy] = useState<null | "seed" | "clear">(null);
   const [simulating, setSimulating] = useState(false);
   const simRef = useRef<{ timer: number | null; buses: SimBus[] }>({ timer: null, buses: [] });
+  const { settings } = useAppSettings();
+  const demoEnabled = settings.demoModeEnabled;
 
   async function onSeed() {
+    if (!demoEnabled) return toast.error("Enable Demo Mode in Settings first");
     setBusy("seed");
     try {
       const res = await seed();
@@ -66,6 +70,7 @@ export function DemoModeTab({ onDataChange }: { onDataChange?: () => void } = {}
   }
 
   async function onClear() {
+    if (!demoEnabled) return toast.error("Enable Demo Mode in Settings first");
     stopSimulation();
     setBusy("clear");
     try {
@@ -80,6 +85,7 @@ export function DemoModeTab({ onDataChange }: { onDataChange?: () => void } = {}
   }
 
   async function startSimulation() {
+    if (!demoEnabled) return toast.error("Enable Demo Mode in Settings first");
     // Load demo buses + their routes
     const { data: buses } = await supabase
       .from("buses")
@@ -169,6 +175,16 @@ export function DemoModeTab({ onDataChange }: { onDataChange?: () => void } = {}
       if (simRef.current.timer !== null) window.clearInterval(simRef.current.timer);
     };
   }, []);
+
+  // Stop simulator immediately if demo mode is switched off.
+  useEffect(() => {
+    if (!demoEnabled && simRef.current.timer !== null) {
+      window.clearInterval(simRef.current.timer);
+      simRef.current.timer = null;
+      simRef.current.buses = [];
+      setSimulating(false);
+    }
+  }, [demoEnabled]);
 
   return (
     <Card>
