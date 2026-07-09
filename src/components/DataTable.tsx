@@ -9,7 +9,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowUpDown, ChevronLeft, ChevronRight, Download, Search } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ArrowUpDown, ChevronLeft, ChevronRight, Download, FileText, Inbox, Printer, Search } from "lucide-react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 export type Column<T> = {
   key: string;
@@ -28,6 +31,10 @@ export function DataTable<T>({
   pageSize = 10,
   csvFilename,
   emptyMessage = "No records yet.",
+  loading = false,
+  filters,
+  pdfTitle,
+  exportFormats = ["csv", "pdf", "print"],
 }: {
   rows: T[];
   columns: Column<T>[];
@@ -36,6 +43,10 @@ export function DataTable<T>({
   pageSize?: number;
   csvFilename?: string;
   emptyMessage?: string;
+  loading?: boolean;
+  filters?: React.ReactNode;
+  pdfTitle?: string;
+  exportFormats?: Array<"csv" | "pdf" | "print">;
 }) {
   const [q, setQ] = useState("");
   const [sortKey, setSortKey] = useState<string | null>(null);
@@ -96,6 +107,52 @@ export function DataTable<T>({
     URL.revokeObjectURL(url);
   }
 
+  function exportableColumns() {
+    return columns.filter((c) => c.csv || c.sortValue);
+  }
+
+  function exportPdf() {
+    const exportCols = exportableColumns();
+    const doc = new jsPDF({ orientation: "landscape" });
+    doc.setFontSize(14);
+    doc.text(pdfTitle ?? csvFilename ?? "Export", 14, 14);
+    doc.setFontSize(9);
+    doc.text(`Generated ${new Date().toLocaleString()} · ${sorted.length} rows`, 14, 20);
+    autoTable(doc, {
+      startY: 26,
+      head: [exportCols.map((c) => c.header)],
+      body: sorted.map((r) =>
+        exportCols.map((c) => String(c.csv ? c.csv(r) : c.sortValue ? c.sortValue(r) : "")),
+      ),
+      styles: { fontSize: 9, cellPadding: 3 },
+      headStyles: { fillColor: [30, 58, 138] },
+    });
+    doc.save((csvFilename ?? "export") + ".pdf");
+  }
+
+  function printTable() {
+    const exportCols = exportableColumns();
+    const w = window.open("", "_blank", "width=900,height=700");
+    if (!w) return;
+    const title = pdfTitle ?? csvFilename ?? "Export";
+    const head = exportCols.map((c) => `<th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333;background:#f3f4f6">${c.header}</th>`).join("");
+    const body = sorted
+      .map(
+        (r) =>
+          `<tr>${exportCols
+            .map((c) => `<td style="padding:6px 8px;border-bottom:1px solid #e5e7eb">${String(c.csv ? c.csv(r) : c.sortValue ? c.sortValue(r) : "")}</td>`)
+            .join("")}</tr>`,
+      )
+      .join("");
+    w.document.write(`<html><head><title>${title}</title></head><body style="font-family:system-ui,sans-serif;padding:24px">
+      <h2 style="margin:0 0 4px">${title}</h2>
+      <div style="color:#666;font-size:12px;margin-bottom:16px">Generated ${new Date().toLocaleString()} · ${sorted.length} rows</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>
+      <script>window.onload=()=>{window.print();}</script>
+    </body></html>`);
+    w.document.close();
+  }
+
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
@@ -113,13 +170,24 @@ export function DataTable<T>({
             />
           </div>
         )}
+        {filters && <div className="flex flex-wrap items-center gap-2">{filters}</div>}
         <div className="ml-auto flex items-center gap-2">
           <span className="text-xs text-muted-foreground">
             {sorted.length} {sorted.length === 1 ? "row" : "rows"}
           </span>
-          {csvFilename && (
+          {csvFilename && exportFormats.includes("csv") && (
             <Button variant="outline" size="sm" onClick={exportCsv} disabled={sorted.length === 0}>
               <Download className="mr-1.5 h-3.5 w-3.5" /> Export CSV
+            </Button>
+          )}
+          {exportFormats.includes("pdf") && (
+            <Button variant="outline" size="sm" onClick={exportPdf} disabled={sorted.length === 0}>
+              <FileText className="mr-1.5 h-3.5 w-3.5" /> PDF
+            </Button>
+          )}
+          {exportFormats.includes("print") && (
+            <Button variant="outline" size="sm" onClick={printTable} disabled={sorted.length === 0}>
+              <Printer className="mr-1.5 h-3.5 w-3.5" /> Print
             </Button>
           )}
         </div>
@@ -147,14 +215,28 @@ export function DataTable<T>({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {pageRows.length === 0 && (
+            {loading && (
+              Array.from({ length: 4 }).map((_, i) => (
+                <TableRow key={`sk-${i}`}>
+                  {columns.map((c) => (
+                    <TableCell key={c.key}><Skeleton className="h-4 w-24" /></TableCell>
+                  ))}
+                </TableRow>
+              ))
+            )}
+            {!loading && pageRows.length === 0 && (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center text-sm text-muted-foreground">
-                  {emptyMessage}
+                <TableCell colSpan={columns.length} className="h-40 text-center">
+                  <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
+                      <Inbox className="h-7 w-7 opacity-60" />
+                    </div>
+                    <div className="text-sm">{emptyMessage}</div>
+                  </div>
                 </TableCell>
               </TableRow>
             )}
-            {pageRows.map((r, i) => (
+            {!loading && pageRows.map((r, i) => (
               <TableRow key={i}>
                 {columns.map((c) => (
                   <TableCell key={c.key} className={c.className}>
