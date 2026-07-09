@@ -269,6 +269,41 @@ function SettingsPage() {
           </CardContent>
         </Card>
 
+        {role === "admin" && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FlaskConical className="h-5 w-5 text-accent" /> Development Settings
+              </CardTitle>
+              <CardDescription>
+                Administrator-only controls for demo and testing tooling. Demo data is always tagged
+                and kept separate from real production records.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="divide-y divide-border">
+              <div className="flex items-start justify-between gap-4 py-3">
+                <div className="min-w-0">
+                  <div className="text-sm font-medium">Demo Mode</div>
+                  <div className="text-xs text-muted-foreground">
+                    When enabled, admins see the Demo Mode tab with tools to load demo data, run the
+                    GPS simulator, and clear demo records. Disable to hide demo tools and demo
+                    accounts from the dashboard.
+                  </div>
+                </div>
+                <Switch
+                  checked={settings.demoModeEnabled}
+                  disabled={!hydrated}
+                  onCheckedChange={(v) => {
+                    update("demoModeEnabled", v as never);
+                    toast.success(v ? "Demo Mode enabled" : "Demo Mode disabled");
+                  }}
+                  aria-label="Demo Mode"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* About & version */}
         <Card>
           <CardHeader>
