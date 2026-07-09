@@ -13,6 +13,9 @@ import { Badge } from "@/components/ui/badge";
 import { Bus, Route as RouteIcon, Users, Megaphone, Trash2, FlaskConical, ArrowLeft, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { DemoModeTab } from "@/components/dashboards/DemoModeTab";
+import { StatCard } from "@/components/StatCard";
+import { FleetCharts } from "@/components/FleetCharts";
+import { DataTable, type Column } from "@/components/DataTable";
 
 type BusStatus = "idle" | "running" | "delayed" | "maintenance" | "completed";
 type BusRow = { id: string; bus_number: string; capacity: number; route_id: string | null; status: BusStatus; active: boolean };
@@ -82,12 +85,38 @@ export function AdminDashboard({ user }: { user: User }) {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-4">
-        <Stat label="Total buses" value={buses.length} />
-        <Stat label="RUNNING BUSES" value={buses.filter((b) => b.active).length} />
-        <Stat label="Live now" value={Object.keys(locs).length} />
-        <Stat label="Drivers" value={drivers.length} />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          label="Total buses"
+          value={buses.length}
+          icon={Bus}
+          tone="primary"
+          hint={`${routes.length} routes configured`}
+        />
+        <StatCard
+          label="Active buses"
+          value={buses.filter((b) => b.active).length}
+          icon={RouteIcon}
+          tone="success"
+          hint={`${buses.length ? Math.round((buses.filter((b) => b.active).length / buses.length) * 100) : 0}% of fleet`}
+        />
+        <StatCard
+          label="Live now"
+          value={Object.keys(locs).length}
+          icon={FlaskConical}
+          tone="accent"
+          hint="Reporting GPS in real time"
+        />
+        <StatCard
+          label="Drivers"
+          value={drivers.length}
+          icon={Users}
+          tone="warning"
+          hint={`${driverAssignments.filter((a) => a.active).length} assigned`}
+        />
       </div>
+
+      <FleetCharts buses={buses.map((b) => ({ status: b.status, active: b.active }))} />
 
       <Card>
         <CardHeader>
@@ -143,15 +172,6 @@ export function AdminDashboard({ user }: { user: User }) {
   );
 }
 
-function Stat({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-xl border border-border bg-card p-4">
-      <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
-      <div className="mt-1 text-3xl font-bold text-primary">{value}</div>
-    </div>
-  );
-}
-
 function BusesTab({ buses, routes, onChange }: { buses: BusRow[]; routes: RouteRow[]; onChange: () => void }) {
   const [busNumber, setBusNumber] = useState("");
   const [capacity, setCapacity] = useState(40);
@@ -179,6 +199,75 @@ function BusesTab({ buses, routes, onChange }: { buses: BusRow[]; routes: RouteR
     onChange();
   }
 
+  const columns: Column<BusRow>[] = [
+    {
+      key: "bus_number",
+      header: "Bus",
+      sortValue: (b) => b.bus_number,
+      csv: (b) => b.bus_number,
+      accessor: (b) => <Badge className="bg-primary text-primary-foreground">Bus {b.bus_number}</Badge>,
+    },
+    {
+      key: "capacity",
+      header: "Capacity",
+      sortValue: (b) => b.capacity,
+      csv: (b) => b.capacity,
+      accessor: (b) => <span className="tabular-nums">{b.capacity}</span>,
+    },
+    {
+      key: "route",
+      header: "Route",
+      sortValue: (b) => routes.find((r) => r.id === b.route_id)?.name ?? "",
+      csv: (b) => routes.find((r) => r.id === b.route_id)?.name ?? "",
+      accessor: (b) => (
+        <Select value={b.route_id ?? "none"} onValueChange={(v) => update(b.id, { route_id: v === "none" ? null : v })}>
+          <SelectTrigger className="h-8 w-full min-w-40"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">— No route —</SelectItem>
+            {routes.map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      ),
+    },
+    {
+      key: "status",
+      header: "Status",
+      sortValue: (b) => b.status,
+      csv: (b) => b.status,
+      accessor: (b) => (
+        <Select value={b.status} onValueChange={(v) => update(b.id, { status: v as BusRow["status"] })}>
+          <SelectTrigger className="h-8 w-32"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {["idle", "running", "delayed", "maintenance", "completed"].map((s) => (
+              <SelectItem key={s} value={s}>{s}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      ),
+    },
+    {
+      key: "active",
+      header: "Active",
+      sortValue: (b) => (b.active ? 1 : 0),
+      csv: (b) => (b.active ? "yes" : "no"),
+      accessor: (b) => (
+        <Button variant={b.active ? "outline" : "secondary"} size="sm" onClick={() => update(b.id, { active: !b.active })}>
+          {b.active ? "Deactivate" : "Activate"}
+        </Button>
+      ),
+    },
+    {
+      key: "actions",
+      header: "",
+      accessor: (b) => (
+        <Button variant="ghost" size="sm" onClick={() => remove(b.id)} aria-label="Delete bus">
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      ),
+      className: "w-10",
+    },
+  ];
+
   return (
     <Card><CardContent className="space-y-4 pt-6">
       <div className="grid gap-3 sm:grid-cols-4">
@@ -192,33 +281,13 @@ function BusesTab({ buses, routes, onChange }: { buses: BusRow[]; routes: RouteR
         </Select>
         <Button onClick={add}>Add bus</Button>
       </div>
-      <div className="space-y-2">
-        {buses.map((b) => (
-          <div key={b.id} className="flex flex-wrap items-center gap-2 rounded-lg border border-border p-3">
-            <Badge className="bg-primary text-primary-foreground">Bus {b.bus_number}</Badge>
-            <Select value={b.route_id ?? "none"} onValueChange={(v) => update(b.id, { route_id: v === "none" ? null : v })}>
-              <SelectTrigger className="w-52"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">— No route —</SelectItem>
-                {routes.map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Select value={b.status} onValueChange={(v) => update(b.id, { status: v as BusRow["status"] })}>
-              <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {["idle", "running", "delayed", "maintenance", "completed"].map((s) => (
-                  <SelectItem key={s} value={s}>{s}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button variant={b.active ? "outline" : "secondary"} size="sm" onClick={() => update(b.id, { active: !b.active })}>
-              {b.active ? "Deactivate" : "Activate"}
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => remove(b.id)}><Trash2 className="h-4 w-4" /></Button>
-          </div>
-        ))}
-        {buses.length === 0 && <p className="text-sm text-muted-foreground">No buses yet.</p>}
-      </div>
+      <DataTable
+        rows={buses}
+        columns={columns}
+        searchKeys={(b) => `${b.bus_number} ${routes.find((r) => r.id === b.route_id)?.name ?? ""} ${b.status}`}
+        csvFilename="buses"
+        emptyMessage="No buses yet."
+      />
     </CardContent></Card>
   );
 }
