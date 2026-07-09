@@ -181,11 +181,8 @@ export function DemoModeTab({ onDataChange }: { onDataChange?: () => void } = {}
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">
           Seed realistic demo accounts, buses, routes, and trips for testing and demonstrations.
-          Demo records are tagged and never mixed with production data. Demo logins use passwords
-          <code className="mx-1 rounded bg-muted px-1">Admin@123</code>,
-          <code className="mx-1 rounded bg-muted px-1">Driver@123</code>,
-          <code className="mx-1 rounded bg-muted px-1">Faculty@123</code>,
-          <code className="mx-1 rounded bg-muted px-1">Student@123</code>.
+          Demo records are tagged and never mixed with production data. Demo account passwords are
+          issued privately to administrators — contact your system administrator to obtain them.
         </p>
 
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
