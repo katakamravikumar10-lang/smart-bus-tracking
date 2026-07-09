@@ -5,6 +5,7 @@ import { StudentDashboard } from "@/components/dashboards/StudentDashboard";
 import { DriverDashboard } from "@/components/dashboards/DriverDashboard";
 import { FacultyDashboard } from "@/components/dashboards/FacultyDashboard";
 import { AdminDashboard } from "@/components/dashboards/AdminDashboard";
+import { DashboardSkeleton } from "@/components/DashboardSkeleton";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -22,7 +23,9 @@ function DashboardPage() {
     return (
       <div className="min-h-screen bg-background">
         <BrandHeader />
-        <div className="mx-auto max-w-7xl px-4 py-10 text-sm text-muted-foreground">Loading…</div>
+        <main className="mx-auto max-w-7xl px-4 py-6">
+          <DashboardSkeleton />
+        </main>
       </div>
     );
   }
