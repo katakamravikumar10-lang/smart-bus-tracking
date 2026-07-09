@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Menu, LayoutDashboard, User as UserIcon, Settings as SettingsIcon, LogOut } from "lucide-react";
+import { Menu, LayoutDashboard, User as UserIcon, Settings as SettingsIcon, LogOut, Bell, LifeBuoy, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -22,8 +22,11 @@ type MobileNavDrawerProps = {
 
 const links = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/notifications", label: "Notifications", icon: Bell },
   { to: "/profile", label: "Profile", icon: UserIcon },
   { to: "/settings", label: "Settings", icon: SettingsIcon },
+  { to: "/help", label: "Help & Support", icon: LifeBuoy },
+  { to: "/about", label: "About", icon: Info },
 ] as const;
 
 /**

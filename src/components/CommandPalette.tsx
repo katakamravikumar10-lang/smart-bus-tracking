@@ -21,6 +21,9 @@ import {
   User as UserIcon,
   FileText,
   MessageSquareWarning,
+  Bell,
+  LifeBuoy,
+  Info,
 } from "lucide-react";
 
 type SearchItem = {
@@ -120,15 +123,18 @@ export function CommandPalette() {
   }, [open, query, user, role, navigate]);
 
   const close = () => setOpen(false);
-  const go = (to: "/dashboard" | "/profile" | "/settings") => () => {
+  const go = (to: "/dashboard" | "/profile" | "/settings" | "/help" | "/about" | "/notifications") => () => {
     navigate({ to });
     close();
   };
 
   const pages: SearchItem[] = [
     { id: "p-dash", label: "Dashboard", icon: LayoutDashboard, onSelect: go("/dashboard") },
+    { id: "p-notif", label: "Notifications", icon: Bell, onSelect: go("/notifications") },
     { id: "p-prof", label: "Profile", icon: UserIcon, onSelect: go("/profile") },
     { id: "p-set", label: "Settings", icon: SettingsIcon, onSelect: go("/settings") },
+    { id: "p-help", label: "Help & Support", icon: LifeBuoy, onSelect: go("/help") },
+    { id: "p-about", label: "About", icon: Info, onSelect: go("/about") },
   ];
 
   const adminPages: SearchItem[] =
