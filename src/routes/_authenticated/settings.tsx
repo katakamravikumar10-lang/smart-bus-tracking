@@ -3,6 +3,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useRole } from "@/lib/auth-hooks";
 import { BrandHeader } from "@/components/BrandHeader";
+import { PageHeader } from "@/components/nav/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -95,6 +96,14 @@ function SettingsPage() {
     <div className="min-h-dvh bg-background">
       <BrandHeader subtitle="Settings" />
       <main className="mx-auto max-w-3xl px-4 py-6 space-y-6">
+        <PageHeader
+          title="Settings"
+          description="Appearance, notifications, and account preferences."
+          breadcrumbs={[
+            { label: "Dashboard", to: "/dashboard" },
+            { label: "Settings" },
+          ]}
+        />
         {/* Appearance */}
         <Card>
           <CardHeader>
