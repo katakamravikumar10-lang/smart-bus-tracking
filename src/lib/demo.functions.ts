@@ -5,110 +5,109 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 // Demo Mode server functions — seed and clear demo data.
 // Admin-only. All demo rows are marked with `is_demo = true`
 // so real production data is never touched by clearDemo().
+// NOTE: All demo credentials, account lists, and seed data live
+// INSIDE the .handler() bodies below. Module-scope constants in
+// a *.functions.ts file are shipped to the client bundle by the
+// code-splitter — only handler bodies are stripped server-side.
 // ============================================================
-
-const PW = {
-  admin: "Admin@123",
-  driver: "Driver@123",
-  faculty: "Faculty@123",
-  student: "Student@123",
-} as const;
-
-type Role = "admin" | "driver" | "faculty" | "student";
-
-type DemoAccount = {
-  email: string;
-  password: string;
-  role: Role;
-  full_name: string;
-  phone?: string;
-  roll_no?: string;
-  department?: string;
-};
-
-const ACCOUNTS: DemoAccount[] = [
-  { email: "admin@nec.demo", password: PW.admin, role: "admin", full_name: "Demo Admin", phone: "+91 90000 00001" },
-  { email: "driver1@nec.demo", password: PW.driver, role: "driver", full_name: "Ramesh Kumar", phone: "+91 90000 10001" },
-  { email: "driver2@nec.demo", password: PW.driver, role: "driver", full_name: "Suresh Reddy", phone: "+91 90000 10002" },
-  { email: "driver3@nec.demo", password: PW.driver, role: "driver", full_name: "Venkatesh Naidu", phone: "+91 90000 10003" },
-  { email: "faculty1@nec.demo", password: PW.faculty, role: "faculty", full_name: "Dr. Priya Sharma", phone: "+91 90000 20001", department: "CSE" },
-  { email: "faculty2@nec.demo", password: PW.faculty, role: "faculty", full_name: "Prof. Anand Rao", phone: "+91 90000 20002", department: "ECE" },
-  { email: "student1@nec.demo", password: PW.student, role: "student", full_name: "Arjun Reddy", phone: "+91 90000 30001", roll_no: "22CS001", department: "CSE" },
-  { email: "student2@nec.demo", password: PW.student, role: "student", full_name: "Divya Priya", phone: "+91 90000 30002", roll_no: "22CS002", department: "CSE" },
-  { email: "student3@nec.demo", password: PW.student, role: "student", full_name: "Kiran Kumar", phone: "+91 90000 30003", roll_no: "22EC010", department: "ECE" },
-  { email: "student4@nec.demo", password: PW.student, role: "student", full_name: "Meghana S.", phone: "+91 90000 30004", roll_no: "22ME021", department: "MECH" },
-  { email: "student5@nec.demo", password: PW.student, role: "student", full_name: "Rahul Varma", phone: "+91 90000 30005", roll_no: "22EE015", department: "EEE" },
-];
-
-// Realistic routes near Narayana Engineering College, Gudur
-const COLLEGE = { name: "NEC Main Gate", lat: 14.1497, lng: 79.8447 };
-
-const ROUTES = [
-  {
-    name: "R1 · Gudur Town — NEC",
-    description: "Gudur Bus Stand → Railway Station → RTC Depot → College",
-    stops: [
-      { name: "Gudur Bus Stand", lat: 14.1503, lng: 79.8506 },
-      { name: "Gudur Railway Station", lat: 14.1467, lng: 79.8564 },
-      { name: "Swarnamukhi Bridge", lat: 14.1472, lng: 79.8530, kind: "bridge" },
-      { name: "RTC Depot", lat: 14.1478, lng: 79.8489 },
-      { name: "Balaji Nagar", lat: 14.1489, lng: 79.8460 },
-      { name: "Balaji Nagar Signal", lat: 14.1493, lng: 79.8450, kind: "signal" },
-      COLLEGE,
-    ],
-  },
-  {
-    name: "R2 · Nellore — NEC",
-    description: "Nellore Trunk Rd → Kovur → Manubolu → College",
-    stops: [
-      { name: "Nellore Bypass", lat: 14.4426, lng: 79.9865 },
-      { name: "Nellore Toll Plaza", lat: 14.4200, lng: 79.9600, kind: "toll" },
-      { name: "Kovur Junction", lat: 14.4931, lng: 79.8927 },
-      { name: "Manubolu", lat: 14.2650, lng: 79.8817 },
-      { name: "Pennar River Bridge", lat: 14.2300, lng: 79.9200, kind: "bridge" },
-      { name: "Chillakur", lat: 14.1930, lng: 80.0090 },
-      COLLEGE,
-    ],
-  },
-  {
-    name: "R3 · Naidupeta — NEC",
-    description: "Naidupeta → Sullurpeta → Venkatagiri → College",
-    stops: [
-      { name: "Naidupeta Bus Stand", lat: 13.9110, lng: 79.9075 },
-      { name: "NH-16 Toll Plaza", lat: 13.9400, lng: 79.8500, kind: "toll" },
-      { name: "Venkatagiri", lat: 13.9673, lng: 79.5820 },
-      { name: "Kota", lat: 14.0257, lng: 80.0068 },
-      { name: "Kandaleru Bridge", lat: 14.0450, lng: 80.0200, kind: "bridge" },
-      { name: "Vakadu", lat: 14.0620, lng: 80.0331 },
-      COLLEGE,
-    ],
-  },
-];
-
-const BUS_DEFS = [
-  { bus_number: "NEC-01", capacity: 45, routeIdx: 0, status: "running" },
-  { bus_number: "NEC-02", capacity: 45, routeIdx: 0, status: "running" },
-  { bus_number: "NEC-03", capacity: 50, routeIdx: 1, status: "running" },
-  { bus_number: "NEC-04", capacity: 50, routeIdx: 1, status: "delayed" },
-  { bus_number: "NEC-05", capacity: 40, routeIdx: 2, status: "running" },
-  { bus_number: "NEC-06", capacity: 40, routeIdx: 2, status: "idle" },
-  { bus_number: "NEC-07", capacity: 45, routeIdx: 0, status: "idle" },
-  { bus_number: "NEC-08", capacity: 45, routeIdx: 1, status: "idle" },
-  { bus_number: "NEC-09", capacity: 50, routeIdx: 2, status: "maintenance" },
-  { bus_number: "NEC-10", capacity: 50, routeIdx: 0, status: "idle" },
-] as const;
-
-async function assertAdmin(supabase: any, userId: string) {
-  const { data, error } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
-  if (error) throw new Error(error.message);
-  if (!data) throw new Error("Forbidden: admin only");
-}
 
 export const seedDemoData = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await assertAdmin(context.supabase, context.userId);
+    // Verify admin via user_roles table (RLS allows users to read their own role)
+    {
+      const { data, error } = await context.supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", context.userId)
+        .eq("role", "admin")
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      if (!data) throw new Error("Forbidden: admin only");
+    }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Demo credentials — server-side only. Prefer env overrides for real deployments.
+    const PW = {
+      admin: process.env.DEMO_ADMIN_PASSWORD ?? "Admin@123",
+      driver: process.env.DEMO_DRIVER_PASSWORD ?? "Driver@123",
+      faculty: process.env.DEMO_FACULTY_PASSWORD ?? "Faculty@123",
+      student: process.env.DEMO_STUDENT_PASSWORD ?? "Student@123",
+    };
+
+    type Role = "admin" | "driver" | "faculty" | "student";
+    const ACCOUNTS: Array<{
+      email: string; password: string; role: Role; full_name: string;
+      phone?: string; roll_no?: string; department?: string;
+    }> = [
+      { email: "admin@nec.demo", password: PW.admin, role: "admin", full_name: "Demo Admin", phone: "+91 90000 00001" },
+      { email: "driver1@nec.demo", password: PW.driver, role: "driver", full_name: "Ramesh Kumar", phone: "+91 90000 10001" },
+      { email: "driver2@nec.demo", password: PW.driver, role: "driver", full_name: "Suresh Reddy", phone: "+91 90000 10002" },
+      { email: "driver3@nec.demo", password: PW.driver, role: "driver", full_name: "Venkatesh Naidu", phone: "+91 90000 10003" },
+      { email: "faculty1@nec.demo", password: PW.faculty, role: "faculty", full_name: "Dr. Priya Sharma", phone: "+91 90000 20001", department: "CSE" },
+      { email: "faculty2@nec.demo", password: PW.faculty, role: "faculty", full_name: "Prof. Anand Rao", phone: "+91 90000 20002", department: "ECE" },
+      { email: "student1@nec.demo", password: PW.student, role: "student", full_name: "Arjun Reddy", phone: "+91 90000 30001", roll_no: "22CS001", department: "CSE" },
+      { email: "student2@nec.demo", password: PW.student, role: "student", full_name: "Divya Priya", phone: "+91 90000 30002", roll_no: "22CS002", department: "CSE" },
+      { email: "student3@nec.demo", password: PW.student, role: "student", full_name: "Kiran Kumar", phone: "+91 90000 30003", roll_no: "22EC010", department: "ECE" },
+      { email: "student4@nec.demo", password: PW.student, role: "student", full_name: "Meghana S.", phone: "+91 90000 30004", roll_no: "22ME021", department: "MECH" },
+      { email: "student5@nec.demo", password: PW.student, role: "student", full_name: "Rahul Varma", phone: "+91 90000 30005", roll_no: "22EE015", department: "EEE" },
+    ];
+
+    const COLLEGE = { name: "NEC Main Gate", lat: 14.1497, lng: 79.8447 };
+    const ROUTES = [
+      {
+        name: "R1 · Gudur Town — NEC",
+        description: "Gudur Bus Stand → Railway Station → RTC Depot → College",
+        stops: [
+          { name: "Gudur Bus Stand", lat: 14.1503, lng: 79.8506 },
+          { name: "Gudur Railway Station", lat: 14.1467, lng: 79.8564 },
+          { name: "Swarnamukhi Bridge", lat: 14.1472, lng: 79.8530, kind: "bridge" },
+          { name: "RTC Depot", lat: 14.1478, lng: 79.8489 },
+          { name: "Balaji Nagar", lat: 14.1489, lng: 79.8460 },
+          { name: "Balaji Nagar Signal", lat: 14.1493, lng: 79.8450, kind: "signal" },
+          COLLEGE,
+        ],
+      },
+      {
+        name: "R2 · Nellore — NEC",
+        description: "Nellore Trunk Rd → Kovur → Manubolu → College",
+        stops: [
+          { name: "Nellore Bypass", lat: 14.4426, lng: 79.9865 },
+          { name: "Nellore Toll Plaza", lat: 14.4200, lng: 79.9600, kind: "toll" },
+          { name: "Kovur Junction", lat: 14.4931, lng: 79.8927 },
+          { name: "Manubolu", lat: 14.2650, lng: 79.8817 },
+          { name: "Pennar River Bridge", lat: 14.2300, lng: 79.9200, kind: "bridge" },
+          { name: "Chillakur", lat: 14.1930, lng: 80.0090 },
+          COLLEGE,
+        ],
+      },
+      {
+        name: "R3 · Naidupeta — NEC",
+        description: "Naidupeta → Sullurpeta → Venkatagiri → College",
+        stops: [
+          { name: "Naidupeta Bus Stand", lat: 13.9110, lng: 79.9075 },
+          { name: "NH-16 Toll Plaza", lat: 13.9400, lng: 79.8500, kind: "toll" },
+          { name: "Venkatagiri", lat: 13.9673, lng: 79.5820 },
+          { name: "Kota", lat: 14.0257, lng: 80.0068 },
+          { name: "Kandaleru Bridge", lat: 14.0450, lng: 80.0200, kind: "bridge" },
+          { name: "Vakadu", lat: 14.0620, lng: 80.0331 },
+          COLLEGE,
+        ],
+      },
+    ];
+
+    const BUS_DEFS = [
+      { bus_number: "NEC-01", capacity: 45, routeIdx: 0, status: "running" },
+      { bus_number: "NEC-02", capacity: 45, routeIdx: 0, status: "running" },
+      { bus_number: "NEC-03", capacity: 50, routeIdx: 1, status: "running" },
+      { bus_number: "NEC-04", capacity: 50, routeIdx: 1, status: "delayed" },
+      { bus_number: "NEC-05", capacity: 40, routeIdx: 2, status: "running" },
+      { bus_number: "NEC-06", capacity: 40, routeIdx: 2, status: "idle" },
+      { bus_number: "NEC-07", capacity: 45, routeIdx: 0, status: "idle" },
+      { bus_number: "NEC-08", capacity: 45, routeIdx: 1, status: "idle" },
+      { bus_number: "NEC-09", capacity: 50, routeIdx: 2, status: "maintenance" },
+      { bus_number: "NEC-10", capacity: 50, routeIdx: 0, status: "idle" },
+    ] as const;
 
     // 1. Fetch existing users (small dataset — one page is enough)
     const existing = new Map<string, string>(); // email -> id
@@ -291,7 +290,16 @@ export const seedDemoData = createServerFn({ method: "POST" })
 export const clearDemoData = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await assertAdmin(context.supabase, context.userId);
+    {
+      const { data, error } = await context.supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", context.userId)
+        .eq("role", "admin")
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      if (!data) throw new Error("Forbidden: admin only");
+    }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // Order matters: rows referencing users/buses first, then users, then buses/routes.
