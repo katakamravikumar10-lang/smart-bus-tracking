@@ -221,7 +221,9 @@ export function AdminDashboard({ user }: { user: User }) {
               <TabsTrigger value="announce"><Megaphone className="mr-1 h-4 w-4" />Announcements</TabsTrigger>
               <TabsTrigger value="trips"><History className="mr-1 h-4 w-4" />Trip History</TabsTrigger>
               <TabsTrigger value="reports"><MessageSquareWarning className="mr-1 h-4 w-4" />Reports</TabsTrigger>
-              <TabsTrigger value="demo"><FlaskConical className="mr-1 h-4 w-4" />Demo Mode</TabsTrigger>
+              {demoEnabled && (
+                <TabsTrigger value="demo"><FlaskConical className="mr-1 h-4 w-4" />Demo Mode</TabsTrigger>
+              )}
             </TabsList>
           </div>
         </div>
@@ -234,7 +236,9 @@ export function AdminDashboard({ user }: { user: User }) {
         <TabsContent value="announce"><AnnouncementsTab routes={routes} /></TabsContent>
         <TabsContent value="trips"><TripsTab trips={trips} buses={buses} drivers={drivers} loading={loading} /></TabsContent>
         <TabsContent value="reports"><ReportsTab feedback={feedback} buses={buses} loading={loading} onChange={refreshAll} /></TabsContent>
-        <TabsContent value="demo"><DemoModeTab onDataChange={refreshAll} /></TabsContent>
+        {demoEnabled && (
+          <TabsContent value="demo"><DemoModeTab onDataChange={refreshAll} /></TabsContent>
+        )}
       </Tabs>
     </div>
   );
