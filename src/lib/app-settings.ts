@@ -10,6 +10,7 @@ export type AppSettings = {
   pushEnabled: boolean;
   language: Language;
   gpsUpdateSeconds: number;
+  demoModeEnabled: boolean;
 };
 
 const STORAGE_KEY = "nbt-app-settings";
@@ -22,6 +23,7 @@ export const defaultSettings: AppSettings = {
   pushEnabled: false,
   language: "en",
   gpsUpdateSeconds: 10,
+  demoModeEnabled: false,
 };
 
 function readStored(): AppSettings {
