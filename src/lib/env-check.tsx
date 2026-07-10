@@ -13,13 +13,18 @@ const REQUIRED_CLIENT_ENV: { key: string; description: string }[] = [
     key: "VITE_SUPABASE_PUBLISHABLE_KEY",
     description: "Supabase publishable/anon key. Required for the browser Supabase client.",
   },
+];
+
+// Optional client env vars. Missing values are logged in dev but do not block the app.
+// The map component renders an inline "Map unavailable" state if the key is missing.
+const OPTIONAL_CLIENT_ENV: { key: string; description: string }[] = [
   {
     key: "VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY",
-    description: "Google Maps JavaScript API key. Required to render live bus maps.",
+    description: "Google Maps JavaScript API key. Required to render the live bus map.",
   },
   {
     key: "VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID",
-    description: "Google Maps tracking channel ID used with the Maps script tag.",
+    description: "Optional Google Maps usage-tracking channel ID.",
   },
 ];
 
@@ -28,6 +33,14 @@ export type MissingEnv = { key: string; description: string };
 export function getMissingClientEnv(): MissingEnv[] {
   const env = import.meta.env as Record<string, string | undefined>;
   return REQUIRED_CLIENT_ENV.filter(({ key }) => {
+    const v = env[key];
+    return v === undefined || v === null || String(v).trim() === "";
+  });
+}
+
+export function getMissingOptionalClientEnv(): MissingEnv[] {
+  const env = import.meta.env as Record<string, string | undefined>;
+  return OPTIONAL_CLIENT_ENV.filter(({ key }) => {
     const v = env[key];
     return v === undefined || v === null || String(v).trim() === "";
   });
