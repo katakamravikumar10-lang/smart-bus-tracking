@@ -7,9 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import collegeLogo from "@/assets/college-logo.png";
-import collegeBanner from "@/assets/college-banner.jpg";
-import founderImg from "@/assets/founder.webp";
+import collegeLogo from "@/assets/college-logo.png.asset.json";
+import collegeBanner from "@/assets/college-banner.jpg.asset.json";
+import founderImg from "@/assets/founder.webp.asset.json";
 import { MailCheck, RefreshCw, ArrowLeft } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
@@ -45,7 +45,7 @@ function AuthPage() {
 
         <div className="relative z-10 flex items-center gap-5">
           <div className="rounded-xl bg-white p-2.5 shadow-lg">
-            <img src={collegeLogo} alt="Narayana Engineering College logo" className="h-20 w-20 object-contain" />
+            <img src={collegeLogo.url} alt="Narayana Engineering College logo" className="h-20 w-20 object-contain" />
           </div>
           <div>
             <div className="text-3xl font-bold leading-tight">Narayana Engineering College</div>
@@ -57,7 +57,7 @@ function AuthPage() {
           <div className="relative">
             <div className="absolute inset-0 -m-2 rounded-2xl bg-accent/40 blur-2xl" />
             <img
-              src={founderImg}
+              src={founderImg.url}
               alt="Dr. Ponguru Narayana, Founder"
               className="relative h-56 w-44 rounded-2xl object-cover shadow-2xl ring-4 ring-white/20"
             />
@@ -90,7 +90,7 @@ function AuthPage() {
             <div className="relative bg-gradient-to-br from-primary to-primary/80 p-6 text-primary-foreground">
               <div className="flex items-center gap-5">
                 <div className="rounded-xl bg-white p-2 shadow-sm">
-                  <img src={collegeLogo} alt="NEC Logo" className="h-20 w-20 object-contain" />
+                  <img src={collegeLogo.url} alt="NEC Logo" className="h-20 w-20 object-contain" />
                 </div>
                 <div className="min-w-0">
                   <div className="text-xl font-bold leading-tight">Narayana Engineering College</div>
@@ -98,14 +98,14 @@ function AuthPage() {
                 </div>
               </div>
               <img
-                src={collegeBanner}
+                src={collegeBanner.url}
                 alt="NEC accreditations"
                 className="mt-5 h-36 w-full rounded-lg bg-white object-contain p-2 shadow-sm"
               />
             </div>
             <div className="flex items-center gap-5 p-5">
               <img
-                src={founderImg}
+                src={founderImg.url}
                 alt="Dr. Ponguru Narayana"
                 className="h-24 w-20 rounded-lg object-cover ring-2 ring-primary/20"
               />

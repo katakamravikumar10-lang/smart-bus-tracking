@@ -13,8 +13,6 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { ThemeProvider } from "../lib/theme";
 import { CommandPalette } from "../components/CommandPalette";
-import { EnvCheckScreen, getMissingClientEnv } from "../lib/env-check";
-import { getMissingOptionalClientEnv } from "../lib/env-check";
 
 function NotFoundComponent() {
   return (
@@ -119,25 +117,6 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-
-  const missingEnv = getMissingClientEnv();
-  if (missingEnv.length > 0) {
-    if (typeof console !== "undefined") {
-      console.error(
-        "[env] Missing required client env vars:",
-        missingEnv.map((m) => m.key).join(", "),
-      );
-    }
-    return <EnvCheckScreen missing={missingEnv} />;
-  }
-
-  const missingOptional = getMissingOptionalClientEnv();
-  if (missingOptional.length > 0 && typeof console !== "undefined") {
-    console.warn(
-      "[env] Optional client env vars not set (some features degraded):",
-      missingOptional.map((m) => m.key).join(", "),
-    );
-  }
 
   return (
     <QueryClientProvider client={queryClient}>
