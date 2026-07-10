@@ -14,6 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { ThemeProvider } from "../lib/theme";
 import { CommandPalette } from "../components/CommandPalette";
 import { EnvCheckScreen, getMissingClientEnv } from "../lib/env-check";
+import { getMissingOptionalClientEnv } from "../lib/env-check";
 
 function NotFoundComponent() {
   return (
@@ -128,6 +129,14 @@ function RootComponent() {
       );
     }
     return <EnvCheckScreen missing={missingEnv} />;
+  }
+
+  const missingOptional = getMissingOptionalClientEnv();
+  if (missingOptional.length > 0 && typeof console !== "undefined") {
+    console.warn(
+      "[env] Optional client env vars not set (some features degraded):",
+      missingOptional.map((m) => m.key).join(", "),
+    );
   }
 
   return (
