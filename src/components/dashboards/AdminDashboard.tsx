@@ -25,10 +25,16 @@ import {
   MessageSquareWarning,
   Eye,
   CheckCircle2,
+  CalendarDays,
+  ArrowUpRight,
+  Upload,
 } from "lucide-react";
 import { toast } from "sonner";
 import { DemoModeTab } from "@/components/dashboards/DemoModeTab";
 import { AnalyticsTab } from "@/components/dashboards/AnalyticsTab";
+import { AcademicYearsTab } from "@/components/dashboards/AcademicYearsTab";
+import { PromoteStudentsTab } from "@/components/dashboards/PromoteStudentsTab";
+import { ImportStudentsTab } from "@/components/dashboards/ImportStudentsTab";
 import { BarChart3, Clock, Activity } from "lucide-react";
 import { useAppSettings } from "@/lib/app-settings";
 import { audit } from "@/lib/audit";
@@ -236,6 +242,9 @@ export function AdminDashboard({ user }: { user: User }) {
               <TabsTrigger value="drivers"><Users className="mr-1 h-4 w-4" />Drivers</TabsTrigger>
               <TabsTrigger value="students"><GraduationCap className="mr-1 h-4 w-4" />Students</TabsTrigger>
               <TabsTrigger value="faculty"><BookOpen className="mr-1 h-4 w-4" />Faculty</TabsTrigger>
+              <TabsTrigger value="years"><CalendarDays className="mr-1 h-4 w-4" />Academic Years</TabsTrigger>
+              <TabsTrigger value="promote"><ArrowUpRight className="mr-1 h-4 w-4" />Promote</TabsTrigger>
+              <TabsTrigger value="import"><Upload className="mr-1 h-4 w-4" />Import</TabsTrigger>
               <TabsTrigger value="announce"><Megaphone className="mr-1 h-4 w-4" />Announcements</TabsTrigger>
               <TabsTrigger value="trips"><History className="mr-1 h-4 w-4" />Trip History</TabsTrigger>
               <TabsTrigger value="analytics"><BarChart3 className="mr-1 h-4 w-4" />Analytics</TabsTrigger>
@@ -252,6 +261,9 @@ export function AdminDashboard({ user }: { user: User }) {
         <TabsContent value="drivers"><DriversTab drivers={drivers} buses={buses} assignments={driverAssignments} loading={loading} onChange={refreshAll} /></TabsContent>
         <TabsContent value="students"><StudentsTab students={students} buses={buses} assignments={studentAssignments} loading={loading} /></TabsContent>
         <TabsContent value="faculty"><FacultyTab faculty={faculty} loading={loading} /></TabsContent>
+        <TabsContent value="years"><AcademicYearsTab /></TabsContent>
+        <TabsContent value="promote"><PromoteStudentsTab /></TabsContent>
+        <TabsContent value="import"><ImportStudentsTab /></TabsContent>
         <TabsContent value="announce"><AnnouncementsTab routes={routes} /></TabsContent>
         <TabsContent value="trips"><TripsTab trips={trips} buses={buses} drivers={drivers} loading={loading} /></TabsContent>
         <TabsContent value="analytics"><AnalyticsTab buses={buses} routes={routes} drivers={drivers} /></TabsContent>
