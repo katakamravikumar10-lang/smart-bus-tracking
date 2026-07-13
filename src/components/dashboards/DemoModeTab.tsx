@@ -245,8 +245,8 @@ export function DemoModeTab({ onDataChange }: { onDataChange?: () => void } = {}
         </div>
 
         <div className="rounded-lg border border-border p-3 text-xs text-muted-foreground">
-          Demo accounts: <code>admin@nec.demo</code>, <code>driver1–3@nec.demo</code>,{" "}
-          <code>faculty1–2@nec.demo</code>, <code>student1–5@nec.demo</code>.
+          Demo account credentials are issued privately to administrators by the Transport
+          Administration and are never bundled with the production application.
         </div>
       </CardContent>
     </Card>
