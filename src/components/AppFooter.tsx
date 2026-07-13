@@ -19,9 +19,7 @@ export function AppFooter() {
               v{APP_VERSION}
             </span>
           </div>
-          <div>
-            Developed by <span className="font-medium text-foreground">{APP_AUTHOR}</span> · B.Tech, {APP_DEPARTMENT}
-          </div>
+          <div>2023–2027 Batch • ECE – B Section</div>
           <div>{APP_INSTITUTION}</div>
         </div>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 sm:justify-end">
