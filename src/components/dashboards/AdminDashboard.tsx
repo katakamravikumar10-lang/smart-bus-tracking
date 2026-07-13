@@ -93,7 +93,7 @@ export function AdminDashboard({ user }: { user: User }) {
   const [loading, setLoading] = useState(true);
   const { settings } = useAppSettings();
   const { active: activeYear, years: academicYears } = useAcademicYears();
-  const demoEnabled = settings.demoModeEnabled;
+  const demoEnabled = settings.demoModeEnabled && isDemoModeAllowed();
   const [tabHistory, setTabHistory] = useState<string[]>(() => {
     if (typeof window === "undefined") return ["buses"];
     try {
