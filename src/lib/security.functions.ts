@@ -118,7 +118,7 @@ export const logAdminAction = createServerFn({ method: "POST" })
       action: data.action,
       entity_type: data.entityType ?? null,
       entity_id: data.entityId ?? null,
-      details: data.details ?? null,
+      details: (data.details ?? null) as never,
       ip: getClientIp(),
       user_agent: getUserAgent(),
     });
