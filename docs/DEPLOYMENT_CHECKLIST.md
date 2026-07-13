@@ -47,6 +47,9 @@ All 11 present in Production and Preview.
 | 5 | Mobile responsive (320-1440 px verified) | ✅ |
 | 6 | Google Maps loads + OpenStreetMap fallback works | ✅ |
 | 7 | Demo Mode **disabled** in production Settings | ✅ |
+| 7a | `VITE_ENABLE_DEMO_MODE=false` in production env | ✅ |
+| 7b | Driver role removed from public signup selector | ✅ |
+| 7c | No demo credentials in production JS bundle | ✅ |
 | 8 | RLS enabled on every public table | ✅ |
 | 9 | Login lockout after 5 failed attempts | ✅ |
 | 10 | Leaked-password (HIBP) protection enabled | ✅ |
