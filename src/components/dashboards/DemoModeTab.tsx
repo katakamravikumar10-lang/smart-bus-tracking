@@ -19,6 +19,7 @@ import {
 import { Database, Play, Square, Trash2, FlaskConical } from "lucide-react";
 import { toast } from "sonner";
 import { useAppSettings } from "@/lib/app-settings";
+import { audit } from "@/lib/audit";
 
 type BusRow = { id: string; bus_number: string; route_id: string | null; is_demo: boolean };
 type RouteRow = { id: string; name: string; stops: { name: string; lat: number; lng: number }[]; is_demo: boolean };
@@ -61,6 +62,7 @@ export function DemoModeTab({ onDataChange }: { onDataChange?: () => void } = {}
     try {
       const res = await seed();
       toast.success(`Loaded ${res.accounts} accounts, ${res.buses} buses, ${res.routes} routes`);
+      audit("demo.seed", { entityType: "demo", details: { accounts: res.accounts, buses: res.buses, routes: res.routes } });
       onDataChange?.();
     } catch (e) {
       toast.error((e as Error).message);
@@ -76,6 +78,7 @@ export function DemoModeTab({ onDataChange }: { onDataChange?: () => void } = {}
     try {
       const res = await clear();
       toast.success(`Removed ${res.removedUsers} users, ${res.removedBuses} buses`);
+      audit("demo.clear", { entityType: "demo", details: { removedUsers: res.removedUsers, removedBuses: res.removedBuses } });
       onDataChange?.();
     } catch (e) {
       toast.error((e as Error).message);
@@ -119,6 +122,7 @@ export function DemoModeTab({ onDataChange }: { onDataChange?: () => void } = {}
     simRef.current.buses = simBuses;
     setSimulating(true);
     toast.success(`Simulating ${simBuses.length} buses`);
+    audit("demo.simulator.start", { entityType: "demo", details: { buses: simBuses.length } });
 
     const tick = async () => {
       const updates: { bus_id: string; lat: number; lng: number; speed: number; heading: number }[] = [];
@@ -165,6 +169,7 @@ export function DemoModeTab({ onDataChange }: { onDataChange?: () => void } = {}
     if (simRef.current.timer !== null) {
       window.clearInterval(simRef.current.timer);
       simRef.current.timer = null;
+      audit("demo.simulator.stop", { entityType: "demo" });
     }
     simRef.current.buses = [];
     setSimulating(false);

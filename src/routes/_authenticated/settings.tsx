@@ -34,6 +34,7 @@ import { AppFooter } from "@/components/AppFooter";
 import { Link } from "@tanstack/react-router";
 import { useAppSettings } from "@/lib/app-settings";
 import { toast } from "sonner";
+import { audit } from "@/lib/audit";
 import { Bell, Palette, ShieldAlert, Languages, Gauge, Info, LifeBuoy, FlaskConical } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/settings")({
@@ -68,7 +69,10 @@ function SettingsPage() {
     const { error } = await supabase.auth.updateUser({ email: newEmail });
     setEmailLoading(false);
     if (error) toast.error(error.message);
-    else toast.success("Confirmation link sent to your new email");
+    else {
+      audit("account.email.change.request", { entityType: "auth", entityId: user?.id, details: { newEmail } });
+      toast.success("Confirmation link sent to your new email");
+    }
   }
 
   async function changePw(e: React.FormEvent) {
@@ -80,6 +84,7 @@ function SettingsPage() {
     setPwLoading(false);
     if (error) return toast.error(error.message);
     setPw(""); setPw2("");
+    audit("account.password.change", { entityType: "auth", entityId: user?.id });
     toast.success("Password updated");
   }
 
@@ -91,6 +96,7 @@ function SettingsPage() {
       setDeleting(false);
       return toast.error(error.message);
     }
+    audit("account.delete", { entityType: "profile", entityId: user!.id });
     await supabase.auth.signOut();
     window.location.assign("/auth");
   }
@@ -295,6 +301,7 @@ function SettingsPage() {
                   disabled={!hydrated}
                   onCheckedChange={(v) => {
                     update("demoModeEnabled", v as never);
+                    audit("settings.demo_mode.toggle", { entityType: "settings", details: { enabled: v } });
                     toast.success(v ? "Demo Mode enabled" : "Demo Mode disabled");
                   }}
                   aria-label="Demo Mode"

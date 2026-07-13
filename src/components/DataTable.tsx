@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowUpDown, ChevronLeft, ChevronRight, Download, FileText, Inbox, Printer, Search } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { audit } from "@/lib/audit";
 
 export type Column<T> = {
   key: string;
@@ -105,6 +106,7 @@ export function DataTable<T>({
     a.download = (csvFilename ?? "export") + ".csv";
     a.click();
     URL.revokeObjectURL(url);
+    audit("report.export", { entityType: "export", entityId: csvFilename, details: { format: "csv", rows: sorted.length, title: pdfTitle ?? csvFilename } });
   }
 
   function exportableColumns() {
@@ -128,6 +130,7 @@ export function DataTable<T>({
       headStyles: { fillColor: [30, 58, 138] },
     });
     doc.save((csvFilename ?? "export") + ".pdf");
+    audit("report.export", { entityType: "export", entityId: csvFilename, details: { format: "pdf", rows: sorted.length, title: pdfTitle ?? csvFilename } });
   }
 
   function printTable() {
@@ -151,6 +154,7 @@ export function DataTable<T>({
       <script>window.onload=()=>{window.print();}</script>
     </body></html>`);
     w.document.close();
+    audit("report.export", { entityType: "export", entityId: csvFilename, details: { format: "print", rows: sorted.length, title: pdfTitle ?? csvFilename } });
   }
 
   return (
