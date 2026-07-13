@@ -28,6 +28,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { DemoModeTab } from "@/components/dashboards/DemoModeTab";
+import { AnalyticsTab } from "@/components/dashboards/AnalyticsTab";
+import { BarChart3, Clock, Activity } from "lucide-react";
 import { useAppSettings } from "@/lib/app-settings";
 import { audit } from "@/lib/audit";
 import { StatCard } from "@/components/StatCard";
