@@ -38,6 +38,7 @@ import { ImportStudentsTab } from "@/components/dashboards/ImportStudentsTab";
 import { BarChart3, Clock, Activity } from "lucide-react";
 import { useAppSettings } from "@/lib/app-settings";
 import { audit } from "@/lib/audit";
+import { isDemoModeAllowed } from "@/lib/demo-mode";
 import { useAcademicYears, type AcademicYear } from "@/lib/academic-year";
 import { StatCard } from "@/components/StatCard";
 import { FleetCharts } from "@/components/FleetCharts";
