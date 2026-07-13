@@ -43,6 +43,10 @@ function loadGoogleMaps(): Promise<void> {
     const key = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
     const channel = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID;
     if (!key) return reject(new Error("Google Maps key missing"));
+    // Diagnostic: confirm key presence at runtime without exposing its value.
+    console.info(
+      `[BusMap] Google Maps key: present (len=${key.length}), channel: ${channel ? "present" : "missing"}`,
+    );
     const timer = window.setTimeout(() => reject(new Error("Google Maps timeout")), 8000);
     window.__initBusMap = async () => {
       try {
