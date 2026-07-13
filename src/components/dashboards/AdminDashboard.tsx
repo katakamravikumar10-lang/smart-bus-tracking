@@ -25,6 +25,9 @@ import {
   MessageSquareWarning,
   Eye,
   CheckCircle2,
+  CalendarDays,
+  ArrowUpRight,
+  Upload,
 } from "lucide-react";
 import { toast } from "sonner";
 import { DemoModeTab } from "@/components/dashboards/DemoModeTab";
