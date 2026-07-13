@@ -28,6 +28,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { DemoModeTab } from "@/components/dashboards/DemoModeTab";
+import { AnalyticsTab } from "@/components/dashboards/AnalyticsTab";
+import { BarChart3, Clock, Activity } from "lucide-react";
 import { useAppSettings } from "@/lib/app-settings";
 import { audit } from "@/lib/audit";
 import { StatCard } from "@/components/StatCard";
@@ -178,19 +180,34 @@ export function AdminDashboard({ user }: { user: User }) {
     return { id: l.bus_id, bus_number: b?.bus_number ?? "", lat: l.lat, lng: l.lng };
   });
 
+  const activeBuses = buses.filter((b) => b.active).length;
+  const delayedBuses = buses.filter((b) => b.status === "delayed").length;
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const weekAgo = Date.now() - 7 * 86400_000;
+  const monthAgo = Date.now() - 30 * 86400_000;
+  const tripsToday = trips.filter((t) => t.started_at.slice(0, 10) === todayKey).length;
+  const tripsWeek = trips.filter((t) => new Date(t.started_at).getTime() >= weekAgo).length;
+  const tripsMonth = trips.filter((t) => new Date(t.started_at).getTime() >= monthAgo).length;
+
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Total buses" value={buses.length} icon={Bus} tone="primary" hint={`${routes.length} routes configured`} />
         <StatCard
           label="Active buses"
-          value={buses.filter((b) => b.active).length}
+          value={activeBuses}
           icon={RouteIcon}
           tone="success"
-          hint={`${buses.length ? Math.round((buses.filter((b) => b.active).length / buses.length) * 100) : 0}% of fleet`}
+          hint={`${buses.length ? Math.round((activeBuses / buses.length) * 100) : 0}% of fleet`}
         />
         <StatCard label="Live now" value={Object.keys(locs).length} icon={FlaskConical} tone="accent" hint="Reporting GPS in real time" />
+        <StatCard label="Delayed buses" value={delayedBuses} icon={Clock} tone={delayedBuses > 0 ? "warning" : "success"} hint={delayedBuses === 0 ? "On schedule" : "Attention needed"} />
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard label="Students" value={students.length} icon={GraduationCap} tone="primary" hint={`${studentAssignments.length} assignments`} />
+        <StatCard label="Faculty" value={faculty.length} icon={BookOpen} tone="accent" hint="Registered users" />
         <StatCard label="Drivers" value={drivers.length} icon={Users} tone="warning" hint={`${driverAssignments.filter((a) => a.active).length} assigned`} />
+        <StatCard label="Trips today" value={tripsToday} icon={Activity} tone="success" hint={`${tripsWeek} this week · ${tripsMonth} this month`} />
       </div>
 
       <FleetCharts buses={buses.map((b) => ({ status: b.status, active: b.active }))} />
@@ -221,6 +238,7 @@ export function AdminDashboard({ user }: { user: User }) {
               <TabsTrigger value="faculty"><BookOpen className="mr-1 h-4 w-4" />Faculty</TabsTrigger>
               <TabsTrigger value="announce"><Megaphone className="mr-1 h-4 w-4" />Announcements</TabsTrigger>
               <TabsTrigger value="trips"><History className="mr-1 h-4 w-4" />Trip History</TabsTrigger>
+              <TabsTrigger value="analytics"><BarChart3 className="mr-1 h-4 w-4" />Analytics</TabsTrigger>
               <TabsTrigger value="reports"><MessageSquareWarning className="mr-1 h-4 w-4" />Reports</TabsTrigger>
               {demoEnabled && (
                 <TabsTrigger value="demo"><FlaskConical className="mr-1 h-4 w-4" />Demo Mode</TabsTrigger>
@@ -236,6 +254,7 @@ export function AdminDashboard({ user }: { user: User }) {
         <TabsContent value="faculty"><FacultyTab faculty={faculty} loading={loading} /></TabsContent>
         <TabsContent value="announce"><AnnouncementsTab routes={routes} /></TabsContent>
         <TabsContent value="trips"><TripsTab trips={trips} buses={buses} drivers={drivers} loading={loading} /></TabsContent>
+        <TabsContent value="analytics"><AnalyticsTab buses={buses} routes={routes} drivers={drivers} /></TabsContent>
         <TabsContent value="reports"><ReportsTab feedback={feedback} buses={buses} loading={loading} onChange={refreshAll} /></TabsContent>
         {demoEnabled && (
           <TabsContent value="demo"><DemoModeTab onDataChange={refreshAll} /></TabsContent>
