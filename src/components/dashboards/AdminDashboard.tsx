@@ -38,6 +38,7 @@ import { ImportStudentsTab } from "@/components/dashboards/ImportStudentsTab";
 import { BarChart3, Clock, Activity } from "lucide-react";
 import { useAppSettings } from "@/lib/app-settings";
 import { audit } from "@/lib/audit";
+import { isDemoModeAllowed } from "@/lib/demo-mode";
 import { useAcademicYears, type AcademicYear } from "@/lib/academic-year";
 import { StatCard } from "@/components/StatCard";
 import { FleetCharts } from "@/components/FleetCharts";
@@ -92,7 +93,7 @@ export function AdminDashboard({ user }: { user: User }) {
   const [loading, setLoading] = useState(true);
   const { settings } = useAppSettings();
   const { active: activeYear, years: academicYears } = useAcademicYears();
-  const demoEnabled = settings.demoModeEnabled;
+  const demoEnabled = settings.demoModeEnabled && isDemoModeAllowed();
   const [tabHistory, setTabHistory] = useState<string[]>(() => {
     if (typeof window === "undefined") return ["buses"];
     try {

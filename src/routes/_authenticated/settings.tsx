@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useRole } from "@/lib/auth-hooks";
+import { isDemoModeAllowed } from "@/lib/demo-mode";
 import { BrandHeader } from "@/components/BrandHeader";
 import { PageHeader } from "@/components/nav/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -275,7 +276,7 @@ function SettingsPage() {
           </CardContent>
         </Card>
 
-        {role === "admin" && (
+        {role === "admin" && isDemoModeAllowed() && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

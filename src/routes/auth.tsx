@@ -284,7 +284,7 @@ function SignUpForm({ onPending }: { onPending: (email: string) => void }) {
     phone: "",
     roll_no: "",
     department: "",
-    role: "student" as "student" | "faculty" | "driver",
+    role: "student" as "student" | "faculty",
   });
   const [loading, setLoading] = useState(false);
 
@@ -324,9 +324,11 @@ function SignUpForm({ onPending }: { onPending: (email: string) => void }) {
           <SelectContent>
             <SelectItem value="student">Student</SelectItem>
             <SelectItem value="faculty">Faculty</SelectItem>
-            <SelectItem value="driver">Driver</SelectItem>
           </SelectContent>
         </Select>
+        <p className="text-xs text-muted-foreground">
+          Driver accounts are created by the Transport Administration.
+        </p>
       </div>
       <div className="space-y-1.5">
         <Label>Full name</Label>

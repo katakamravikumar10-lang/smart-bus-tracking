@@ -147,7 +147,10 @@ The system improves transportation efficiency, enhances student safety, reduces 
 
 ## 🧪 Demo Mode
 
-Development-only Demo Mode includes:
+Demo Mode is **development-only**. It is completely excluded from production
+builds unless `VITE_ENABLE_DEMO_MODE=true` is set at build time. In production
+the tab is hidden, the Settings toggle is hidden, and no demo credentials ship
+in the JavaScript bundle. Includes:
 
 - Demo Accounts
 - Demo Buses
@@ -159,6 +162,12 @@ Development-only Demo Mode includes:
 - Dashboard Statistics
 - Clear Demo Data
 - Safe Development Environment
+
+**Production configuration:** keep `VITE_ENABLE_DEMO_MODE=false` (or unset).
+
+**Signup roles:** public registration only exposes Student and Faculty. Driver
+accounts are provisioned by the Transport Administration from the Admin
+Dashboard — they cannot be self-registered.
 
 ---
 

@@ -27,6 +27,7 @@ Configured in **Vercel → Project → Settings → Environment Variables** for 
 | `GOOGLE_MAPS_API_KEY` | server | Google Cloud Console |
 | `GOOGLE_MAPS_BROWSER_KEY` | client | Google Cloud Console (HTTP referrer restricted) |
 | `GOOGLE_MAPS_TRACKING_ID` | analytics | Google |
+| `VITE_ENABLE_DEMO_MODE` | client (build) | Set to `false` for production. When unset or `false`, Demo Mode UI, demo credentials, and the GPS simulator are excluded from the production bundle. Set to `true` only for staging demos. |
 
 > Restrict the browser key to deployed domain(s). Restrict the server key by IP where possible. Never commit keys.
 
@@ -62,6 +63,8 @@ Configured in **Vercel → Project → Settings → Environment Variables** for 
 - [ ] Env vars set in Vercel (Prod + Preview).
 - [ ] Custom domain DNS records configured.
 - [ ] Demo Mode disabled in Settings → Development.
+- [ ] `VITE_ENABLE_DEMO_MODE=false` (or unset) in Vercel Production env.
+- [ ] Driver accounts are administrator-created only; public signup exposes Student and Faculty only.
 - [ ] Admin account created and verified.
 - [ ] Buses, routes, drivers seeded.
 - [ ] Google Maps loads on production URL.
