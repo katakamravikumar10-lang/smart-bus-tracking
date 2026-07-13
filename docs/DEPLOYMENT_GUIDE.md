@@ -25,8 +25,8 @@ Configured in **Vercel → Project → Settings → Environment Variables** for 
 | `SUPABASE_DB_URL` | server (migrations) | Lovable Cloud |
 | `LOVABLE_API_KEY` | server | Lovable |
 | `GOOGLE_MAPS_API_KEY` | server | Google Cloud Console |
-| `GOOGLE_MAPS_BROWSER_KEY` | client | Google Cloud Console (HTTP referrer restricted) |
-| `GOOGLE_MAPS_TRACKING_ID` | analytics | Google |
+| `VITE_GOOGLE_MAPS_BROWSER_KEY` | client | Google Cloud Console (HTTP referrer restricted). MUST use the `VITE_` prefix — Vite only exposes `VITE_*` vars to the browser bundle. A bare `GOOGLE_MAPS_BROWSER_KEY` is stripped at build time and the Maps script is never injected. |
+| `VITE_GOOGLE_MAPS_TRACKING_ID` | analytics | Google |
 | `VITE_ENABLE_DEMO_MODE` | client (build) | Set to `false` for production. When unset or `false`, Demo Mode UI, demo credentials, and the GPS simulator are excluded from the production bundle. Set to `true` only for staging demos. |
 
 > Restrict the browser key to deployed domain(s). Restrict the server key by IP where possible. Never commit keys.
