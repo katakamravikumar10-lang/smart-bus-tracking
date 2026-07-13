@@ -18,6 +18,7 @@ import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedHelpRouteImport } from './routes/_authenticated/help'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedAuditRouteImport } from './routes/_authenticated/audit'
 import { Route as AuthenticatedAboutRouteImport } from './routes/_authenticated/about'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -65,6 +66,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAuditRoute = AuthenticatedAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedAboutRoute = AuthenticatedAboutRouteImport.update({
   id: '/about',
   path: '/about',
@@ -76,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/about': typeof AuthenticatedAboutRoute
+  '/audit': typeof AuthenticatedAuditRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/help': typeof AuthenticatedHelpRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
@@ -87,6 +94,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/about': typeof AuthenticatedAboutRoute
+  '/audit': typeof AuthenticatedAuditRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/help': typeof AuthenticatedHelpRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
@@ -100,6 +108,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/about': typeof AuthenticatedAboutRoute
+  '/_authenticated/audit': typeof AuthenticatedAuditRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/help': typeof AuthenticatedHelpRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
@@ -113,6 +122,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/about'
+    | '/audit'
     | '/dashboard'
     | '/help'
     | '/notifications'
@@ -124,6 +134,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/about'
+    | '/audit'
     | '/dashboard'
     | '/help'
     | '/notifications'
@@ -136,6 +147,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/_authenticated/about'
+    | '/_authenticated/audit'
     | '/_authenticated/dashboard'
     | '/_authenticated/help'
     | '/_authenticated/notifications'
@@ -215,6 +227,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/audit': {
+      id: '/_authenticated/audit'
+      path: '/audit'
+      fullPath: '/audit'
+      preLoaderRoute: typeof AuthenticatedAuditRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/about': {
       id: '/_authenticated/about'
       path: '/about'
@@ -227,6 +246,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteChildren {
   AuthenticatedAboutRoute: typeof AuthenticatedAboutRoute
+  AuthenticatedAuditRoute: typeof AuthenticatedAuditRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedHelpRoute: typeof AuthenticatedHelpRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
@@ -236,6 +256,7 @@ interface AuthenticatedRouteChildren {
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAboutRoute: AuthenticatedAboutRoute,
+  AuthenticatedAuditRoute: AuthenticatedAuditRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedHelpRoute: AuthenticatedHelpRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
