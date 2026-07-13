@@ -29,6 +29,7 @@ import {
 import { toast } from "sonner";
 import { DemoModeTab } from "@/components/dashboards/DemoModeTab";
 import { useAppSettings } from "@/lib/app-settings";
+import { audit } from "@/lib/audit";
 import { StatCard } from "@/components/StatCard";
 import { FleetCharts } from "@/components/FleetCharts";
 import { DataTable, type Column } from "@/components/DataTable";
@@ -253,23 +254,29 @@ function BusesTab({ buses, routes, loading, onChange }: { buses: BusRow[]; route
 
   async function add() {
     if (!busNumber.trim()) return toast.error("Enter bus number");
-    const { error } = await supabase.from("buses").insert({ bus_number: busNumber.trim(), capacity, route_id: routeId || null });
+    const after = { bus_number: busNumber.trim(), capacity, route_id: routeId || null };
+    const { data: created, error } = await supabase.from("buses").insert(after).select("id").single();
     if (error) return toast.error(error.message);
+    audit("bus.create", { entityType: "bus", entityId: created?.id, after });
     setBusNumber("");
     onChange();
     toast.success("Bus added");
   }
 
   async function update(id: string, patch: { route_id?: string | null; status?: BusStatus; active?: boolean }) {
+    const before = buses.find((b) => b.id === id);
     const { error } = await supabase.from("buses").update(patch).eq("id", id);
     if (error) return toast.error(error.message);
+    audit("bus.update", { entityType: "bus", entityId: id, before, after: patch });
     onChange();
   }
 
   async function remove(id: string) {
     if (!confirm("Delete this bus?")) return;
+    const before = buses.find((b) => b.id === id);
     const { error } = await supabase.from("buses").delete().eq("id", id);
     if (error) return toast.error(error.message);
+    audit("bus.delete", { entityType: "bus", entityId: id, before });
     onChange();
   }
 
@@ -367,8 +374,10 @@ function RoutesTab({ routes, loading, onChange }: { routes: RouteRow[]; loading:
 
   async function createRoute() {
     if (!name.trim()) return toast.error("Enter route name");
-    const { data, error } = await supabase.from("routes").insert({ name: name.trim(), description: description || null, stops: [] }).select("id").single();
+    const after = { name: name.trim(), description: description || null, stops: [] };
+    const { data, error } = await supabase.from("routes").insert(after).select("id").single();
     if (error) return toast.error(error.message);
+    audit("route.create", { entityType: "route", entityId: data.id, after });
     setName(""); setDescription("");
     setSelectedId(data.id);
     onChange();
@@ -377,26 +386,33 @@ function RoutesTab({ routes, loading, onChange }: { routes: RouteRow[]; loading:
     if (!selected) return;
     const lat = parseFloat(stopLat), lng = parseFloat(stopLng);
     if (!stopName.trim() || Number.isNaN(lat) || Number.isNaN(lng)) return toast.error("Enter stop name and valid lat/lng");
-    const newStops = [...selected.stops, { name: stopName.trim(), lat, lng, order: selected.stops.length }];
+    const newStop = { name: stopName.trim(), lat, lng, order: selected.stops.length };
+    const newStops = [...selected.stops, newStop];
     const { error } = await supabase.from("routes").update({ stops: newStops }).eq("id", selected.id);
     if (error) return toast.error(error.message);
+    audit("route.stop.add", { entityType: "route", entityId: selected.id, after: newStop, details: { totalStops: newStops.length } });
     setStopName(""); setStopLat(""); setStopLng("");
     onChange();
   }
   async function removeStop(idx: number) {
     if (!selected) return;
+    const removed = selected.stops[idx];
     const newStops = selected.stops.filter((_, i) => i !== idx);
     await supabase.from("routes").update({ stops: newStops }).eq("id", selected.id);
+    audit("route.stop.remove", { entityType: "route", entityId: selected.id, before: removed, details: { totalStops: newStops.length } });
     onChange();
   }
   async function removeRoute(id: string) {
     if (!confirm("Delete this route?")) return;
+    const before = routes.find((r) => r.id === id);
     await supabase.from("routes").delete().eq("id", id);
+    audit("route.delete", { entityType: "route", entityId: id, before });
     if (selectedId === id) setSelectedId("");
     onChange();
   }
   async function toggleActive(r: RouteRow) {
     await supabase.from("routes").update({ active: !r.active }).eq("id", r.id);
+    audit("route.update", { entityType: "route", entityId: r.id, before: { active: r.active }, after: { active: !r.active } });
     onChange();
   }
 
@@ -475,14 +491,18 @@ function DriversTab({ drivers, buses, assignments, loading, onChange }: { driver
   const [viewing, setViewing] = useState<Person | null>(null);
 
   async function assign(driverId: string, busId: string) {
+    const prev = assignments.find((x) => x.driver_id === driverId && x.active);
     await supabase.from("driver_assignments").update({ active: false }).eq("driver_id", driverId);
     const { error } = await supabase.from("driver_assignments").upsert({ driver_id: driverId, bus_id: busId, active: true }, { onConflict: "driver_id,bus_id" });
     if (error) return toast.error(error.message);
+    audit("driver.assign", { entityType: "driver_assignment", entityId: driverId, before: prev, after: { driver_id: driverId, bus_id: busId, active: true } });
     onChange();
     toast.success("Assigned");
   }
   async function unassign(id: string) {
+    const before = assignments.find((x) => x.id === id);
     await supabase.from("driver_assignments").update({ active: false }).eq("id", id);
+    audit("driver.unassign", { entityType: "driver_assignment", entityId: id, before });
     onChange();
   }
 
@@ -763,11 +783,14 @@ function ReportsTab({ feedback, buses, loading, onChange }: { feedback: Feedback
 
   async function resolve(id: string, resolved: boolean) {
     await supabase.from("feedback").update({ resolved }).eq("id", id);
+    audit("report.resolve", { entityType: "feedback", entityId: id, after: { resolved } });
     onChange();
   }
   async function remove(id: string) {
     if (!confirm("Delete this report?")) return;
+    const before = feedback.find((f) => f.id === id);
     await supabase.from("feedback").delete().eq("id", id);
+    audit("report.delete", { entityType: "feedback", entityId: id, before });
     onChange();
   }
 
@@ -878,14 +901,20 @@ function AnnouncementsTab({ routes }: { routes: RouteRow[] }) {
     if (!title.trim() || !body.trim()) return toast.error("Fill title and body");
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) return toast.error("You must be signed in");
-    const { error } = await supabase.from("announcements").insert({
+    const payload = {
       title: title.trim(), body: body.trim(),
       target_role: role === "all" ? null : (role as "student" | "faculty" | "driver"),
       route_id: routeId || null,
       is_emergency: emergency,
       created_by: u.user.id,
-    });
+    };
+    const { data: created, error } = await supabase.from("announcements").insert(payload).select("id").single();
     if (error) return toast.error(error.message);
+    audit(emergency ? "announcement.emergency" : "announcement.broadcast", {
+      entityType: "announcement",
+      entityId: created?.id,
+      after: payload,
+    });
     setTitle(""); setBody(""); setEmergency(false);
     load();
     toast.success("Sent");
@@ -893,7 +922,9 @@ function AnnouncementsTab({ routes }: { routes: RouteRow[] }) {
 
   async function remove(id: string) {
     if (!confirm("Delete this announcement?")) return;
+    const before = list.find((a) => a.id === id);
     await supabase.from("announcements").delete().eq("id", id);
+    audit("announcement.delete", { entityType: "announcement", entityId: id, before });
     load();
   }
 
