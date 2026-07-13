@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { Camera, KeyRound, Save, LogOut } from "lucide-react";
 import { useAvatarUrl, avatarInitials } from "@/lib/avatar";
 import { AppFooter } from "@/components/AppFooter";
+import { audit } from "@/lib/audit";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({ meta: [{ title: "Profile · Narayana Bus Tracker" }] }),
@@ -119,7 +120,10 @@ function ProfilePage() {
     const { error } = await supabase.from("profiles").upsert(payload, { onConflict: "id" });
     setSaving(false);
     if (error) toast.error(error.message);
-    else toast.success("Profile updated");
+    else {
+      audit("profile.update", { entityType: "profile", entityId: user.id, after: payload });
+      toast.success("Profile updated");
+    }
   }
 
   async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -138,6 +142,7 @@ function ProfilePage() {
     setUploading(false);
     if (dbErr) return toast.error(dbErr.message);
     setProfile((p) => (p ? { ...p, avatar_url: path } : p));
+    audit("profile.avatar.update", { entityType: "profile", entityId: user.id, details: { path } });
     toast.success("Profile picture updated");
   }
 
@@ -150,6 +155,7 @@ function ProfilePage() {
     setChangingPw(false);
     if (error) return toast.error(error.message);
     setNewPassword(""); setConfirmPassword("");
+    audit("account.password.change", { entityType: "auth", entityId: user.id });
     toast.success("Password updated");
   }
 
