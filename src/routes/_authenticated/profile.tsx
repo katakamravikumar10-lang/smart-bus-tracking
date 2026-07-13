@@ -155,7 +155,7 @@ function ProfilePage() {
     setChangingPw(false);
     if (error) return toast.error(error.message);
     setNewPassword(""); setConfirmPassword("");
-    audit("account.password.change", { entityType: "auth", entityId: user.id });
+      audit("account.password.change", { entityType: "auth", entityId: user?.id });
     toast.success("Password updated");
   }
 
