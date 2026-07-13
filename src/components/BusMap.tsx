@@ -37,36 +37,61 @@ const COLLEGE = { lat: 14.1497, lng: 79.8447 };
 let mapsPromise: Promise<void> | null = null;
 function loadGoogleMaps(): Promise<void> {
   if (typeof window === "undefined") return Promise.reject(new Error("no window"));
+  console.log("[BusMap] loadGoogleMaps() called");
   if (window.google?.maps?.Map) return Promise.resolve();
   if (mapsPromise) return mapsPromise;
   mapsPromise = new Promise<void>((resolve, reject) => {
-    const key = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
-    const channel = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID;
-    if (!key) return reject(new Error("Google Maps key missing"));
+    // Accept both the Lovable-managed connector variable and a plain VITE_
+    // customer-owned key for Vercel/self-hosted deployments. Only VITE_-prefixed
+    // vars are exposed to the client bundle by Vite — a bare GOOGLE_MAPS_BROWSER_KEY
+    // in Vercel env will NOT reach the browser.
+    const key =
+      import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY ||
+      import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY;
+    const channel =
+      import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID ||
+      import.meta.env.VITE_GOOGLE_MAPS_TRACKING_ID;
+    if (!key) {
+      console.error(
+        "[BusMap] Google Maps key missing. Set VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY " +
+          "or VITE_GOOGLE_MAPS_BROWSER_KEY in the deployment environment (VITE_ prefix required).",
+      );
+      return reject(new Error("Google Maps key missing"));
+    }
     // Diagnostic: confirm key presence at runtime without exposing its value.
     console.info(
       `[BusMap] Google Maps key: present (len=${key.length}), channel: ${channel ? "present" : "missing"}`,
     );
+    const existing = document.querySelector<HTMLScriptElement>(
+      'script[src*="maps.googleapis.com/maps/api/js"]',
+    );
+    if (existing) {
+      console.log("[BusMap] Script already exists");
+    }
     const timer = window.setTimeout(() => reject(new Error("Google Maps timeout")), 8000);
     window.__initBusMap = async () => {
       try {
         await google.maps.importLibrary("maps");
         await google.maps.importLibrary("marker");
         window.clearTimeout(timer);
+        console.log("[BusMap] Script loaded");
         resolve();
       } catch (e) {
         window.clearTimeout(timer);
         reject(e as Error);
       }
     };
+    console.log("[BusMap] Injecting Google Maps script");
     const s = document.createElement("script");
     s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&loading=async&callback=__initBusMap&channel=${channel}`;
     s.async = true;
     s.onerror = () => {
       window.clearTimeout(timer);
+      console.error("[BusMap] Script failed");
       reject(new Error("Failed to load Google Maps"));
     };
     document.head.appendChild(s);
+    console.log("[BusMap] Script appended");
   }).catch((err) => {
     mapsPromise = null;
     throw err;
@@ -78,6 +103,7 @@ export function BusMap(props: BusMapProps) {
   const [mode, setMode] = useState<"loading" | "google" | "osm">("loading");
 
   useEffect(() => {
+    console.log("[BusMap] mounted");
     let cancelled = false;
     loadGoogleMaps()
       .then(() => {
