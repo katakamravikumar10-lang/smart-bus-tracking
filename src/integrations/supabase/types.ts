@@ -14,8 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      academic_years: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          end_date: string
+          id: string
+          locked: boolean
+          name: string
+          promotions_enabled: boolean
+          start_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          end_date: string
+          id?: string
+          locked?: boolean
+          name: string
+          promotions_enabled?: boolean
+          start_date: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          end_date?: string
+          id?: string
+          locked?: boolean
+          name?: string
+          promotions_enabled?: boolean
+          start_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       announcements: {
         Row: {
+          academic_year_id: string | null
           body: string
           created_at: string
           created_by: string | null
@@ -27,6 +67,7 @@ export type Database = {
           title: string
         }
         Insert: {
+          academic_year_id?: string | null
           body: string
           created_at?: string
           created_by?: string | null
@@ -38,6 +79,7 @@ export type Database = {
           title: string
         }
         Update: {
+          academic_year_id?: string | null
           body?: string
           created_at?: string
           created_by?: string | null
@@ -49,6 +91,13 @@ export type Database = {
           title?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "announcements_academic_year_id_fkey"
+            columns: ["academic_year_id"]
+            isOneToOne: false
+            referencedRelation: "academic_years"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "announcements_route_id_fkey"
             columns: ["route_id"]
@@ -184,6 +233,7 @@ export type Database = {
       }
       driver_assignments: {
         Row: {
+          academic_year_id: string | null
           active: boolean
           bus_id: string
           created_at: string
@@ -191,6 +241,7 @@ export type Database = {
           id: string
         }
         Insert: {
+          academic_year_id?: string | null
           active?: boolean
           bus_id: string
           created_at?: string
@@ -198,6 +249,7 @@ export type Database = {
           id?: string
         }
         Update: {
+          academic_year_id?: string | null
           active?: boolean
           bus_id?: string
           created_at?: string
@@ -206,7 +258,65 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "driver_assignments_academic_year_id_fkey"
+            columns: ["academic_year_id"]
+            isOneToOne: false
+            referencedRelation: "academic_years"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "driver_assignments_bus_id_fkey"
+            columns: ["bus_id"]
+            isOneToOne: false
+            referencedRelation: "buses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      faculty_assignments: {
+        Row: {
+          academic_year_id: string
+          active: boolean
+          boarding_stop: string | null
+          bus_id: string | null
+          created_at: string
+          department: string | null
+          faculty_id: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          academic_year_id: string
+          active?: boolean
+          boarding_stop?: string | null
+          bus_id?: string | null
+          created_at?: string
+          department?: string | null
+          faculty_id: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          academic_year_id?: string
+          active?: boolean
+          boarding_stop?: string | null
+          bus_id?: string | null
+          created_at?: string
+          department?: string | null
+          faculty_id?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faculty_assignments_academic_year_id_fkey"
+            columns: ["academic_year_id"]
+            isOneToOne: false
+            referencedRelation: "academic_years"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "faculty_assignments_bus_id_fkey"
             columns: ["bus_id"]
             isOneToOne: false
             referencedRelation: "buses"
@@ -355,7 +465,9 @@ export type Database = {
       }
       profiles: {
         Row: {
+          academic_year_id: string | null
           avatar_url: string | null
+          branch: string | null
           created_at: string
           department: string | null
           email: string | null
@@ -366,10 +478,15 @@ export type Database = {
           license_no: string | null
           phone: string | null
           roll_no: string | null
+          section: string | null
+          student_status: string
           updated_at: string
+          year_of_study: number | null
         }
         Insert: {
+          academic_year_id?: string | null
           avatar_url?: string | null
+          branch?: string | null
           created_at?: string
           department?: string | null
           email?: string | null
@@ -380,10 +497,15 @@ export type Database = {
           license_no?: string | null
           phone?: string | null
           roll_no?: string | null
+          section?: string | null
+          student_status?: string
           updated_at?: string
+          year_of_study?: number | null
         }
         Update: {
+          academic_year_id?: string | null
           avatar_url?: string | null
+          branch?: string | null
           created_at?: string
           department?: string | null
           email?: string | null
@@ -394,9 +516,20 @@ export type Database = {
           license_no?: string | null
           phone?: string | null
           roll_no?: string | null
+          section?: string | null
+          student_status?: string
           updated_at?: string
+          year_of_study?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_academic_year_id_fkey"
+            columns: ["academic_year_id"]
+            isOneToOne: false
+            referencedRelation: "academic_years"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       routes: {
         Row: {
@@ -433,6 +566,8 @@ export type Database = {
       }
       student_assignments: {
         Row: {
+          academic_year_id: string | null
+          active: boolean
           boarding_stop: string | null
           bus_id: string
           created_at: string
@@ -440,6 +575,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          academic_year_id?: string | null
+          active?: boolean
           boarding_stop?: string | null
           bus_id: string
           created_at?: string
@@ -447,6 +584,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          academic_year_id?: string | null
+          active?: boolean
           boarding_stop?: string | null
           bus_id?: string
           created_at?: string
@@ -454,6 +593,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "student_assignments_academic_year_id_fkey"
+            columns: ["academic_year_id"]
+            isOneToOne: false
+            referencedRelation: "academic_years"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "student_assignments_bus_id_fkey"
             columns: ["bus_id"]
@@ -463,8 +609,107 @@ export type Database = {
           },
         ]
       }
+      student_imports: {
+        Row: {
+          academic_year_id: string | null
+          created_at: string
+          error_details: Json
+          errors: number
+          id: string
+          imported_by: string | null
+          inserted: number
+          skipped: number
+          total: number
+          updated: number
+        }
+        Insert: {
+          academic_year_id?: string | null
+          created_at?: string
+          error_details?: Json
+          errors?: number
+          id?: string
+          imported_by?: string | null
+          inserted?: number
+          skipped?: number
+          total?: number
+          updated?: number
+        }
+        Update: {
+          academic_year_id?: string | null
+          created_at?: string
+          error_details?: Json
+          errors?: number
+          id?: string
+          imported_by?: string | null
+          inserted?: number
+          skipped?: number
+          total?: number
+          updated?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_imports_academic_year_id_fkey"
+            columns: ["academic_year_id"]
+            isOneToOne: false
+            referencedRelation: "academic_years"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_promotions: {
+        Row: {
+          action: string
+          created_at: string
+          from_academic_year_id: string | null
+          from_year_of_study: number | null
+          id: string
+          performed_by: string | null
+          student_id: string
+          to_academic_year_id: string | null
+          to_year_of_study: number | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          from_academic_year_id?: string | null
+          from_year_of_study?: number | null
+          id?: string
+          performed_by?: string | null
+          student_id: string
+          to_academic_year_id?: string | null
+          to_year_of_study?: number | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          from_academic_year_id?: string | null
+          from_year_of_study?: number | null
+          id?: string
+          performed_by?: string | null
+          student_id?: string
+          to_academic_year_id?: string | null
+          to_year_of_study?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_promotions_from_academic_year_id_fkey"
+            columns: ["from_academic_year_id"]
+            isOneToOne: false
+            referencedRelation: "academic_years"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_promotions_to_academic_year_id_fkey"
+            columns: ["to_academic_year_id"]
+            isOneToOne: false
+            referencedRelation: "academic_years"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trips: {
         Row: {
+          academic_year_id: string | null
           bus_id: string
           driver_id: string
           ended_at: string | null
@@ -475,6 +720,7 @@ export type Database = {
           status: Database["public"]["Enums"]["trip_status"]
         }
         Insert: {
+          academic_year_id?: string | null
           bus_id: string
           driver_id: string
           ended_at?: string | null
@@ -485,6 +731,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["trip_status"]
         }
         Update: {
+          academic_year_id?: string | null
           bus_id?: string
           driver_id?: string
           ended_at?: string | null
@@ -495,6 +742,13 @@ export type Database = {
           status?: Database["public"]["Enums"]["trip_status"]
         }
         Relationships: [
+          {
+            foreignKeyName: "trips_academic_year_id_fkey"
+            columns: ["academic_year_id"]
+            isOneToOne: false
+            referencedRelation: "academic_years"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "trips_bus_id_fkey"
             columns: ["bus_id"]
@@ -530,6 +784,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      active_academic_year_id: { Args: never; Returns: string }
       current_user_role: {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"]
