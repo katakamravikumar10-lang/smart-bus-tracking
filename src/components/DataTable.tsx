@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowUpDown, ChevronLeft, ChevronRight, Download, FileText, Inbox, Printer, Search } from "lucide-react";
+import { ArrowUpDown, ChevronLeft, ChevronRight, Download, FileSpreadsheet, FileText, Inbox, Printer, Search } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
