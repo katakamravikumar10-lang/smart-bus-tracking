@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowUpDown, ChevronLeft, ChevronRight, Download, FileText, Inbox, Printer, Search } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import * as XLSX from "xlsx";
 import { audit } from "@/lib/audit";
 
 export type Column<T> = {
@@ -35,7 +36,7 @@ export function DataTable<T>({
   loading = false,
   filters,
   pdfTitle,
-  exportFormats = ["csv", "pdf", "print"],
+  exportFormats = ["csv", "excel", "pdf", "print"],
 }: {
   rows: T[];
   columns: Column<T>[];
@@ -47,7 +48,7 @@ export function DataTable<T>({
   loading?: boolean;
   filters?: React.ReactNode;
   pdfTitle?: string;
-  exportFormats?: Array<"csv" | "pdf" | "print">;
+  exportFormats?: Array<"csv" | "excel" | "pdf" | "print">;
 }) {
   const [q, setQ] = useState("");
   const [sortKey, setSortKey] = useState<string | null>(null);
@@ -111,6 +112,31 @@ export function DataTable<T>({
 
   function exportableColumns() {
     return columns.filter((c) => c.csv || c.sortValue);
+  }
+
+  function exportExcel() {
+    const exportCols = exportableColumns();
+    const header = exportCols.map((c) => c.header);
+    const body = sorted.map((r) =>
+      exportCols.map((c) => (c.csv ? c.csv(r) : c.sortValue ? c.sortValue(r) : "")),
+    );
+    const aoa = [header, ...body];
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    // Auto column widths
+    ws["!cols"] = header.map((_, idx) => ({
+      wch: Math.min(
+        40,
+        Math.max(
+          10,
+          ...aoa.map((row) => String(row[idx] ?? "").length + 2),
+        ),
+      ),
+    }));
+    const wb = XLSX.utils.book_new();
+    const sheetName = (pdfTitle ?? csvFilename ?? "Export").slice(0, 31);
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    XLSX.writeFile(wb, (csvFilename ?? "export") + ".xlsx");
+    audit("report.export", { entityType: "export", entityId: csvFilename, details: { format: "xlsx", rows: sorted.length, title: pdfTitle ?? csvFilename } });
   }
 
   function exportPdf() {
@@ -182,6 +208,11 @@ export function DataTable<T>({
           {csvFilename && exportFormats.includes("csv") && (
             <Button variant="outline" size="sm" onClick={exportCsv} disabled={sorted.length === 0}>
               <Download className="mr-1.5 h-3.5 w-3.5" /> Export CSV
+            </Button>
+          )}
+          {csvFilename && exportFormats.includes("excel") && (
+            <Button variant="outline" size="sm" onClick={exportExcel} disabled={sorted.length === 0}>
+              <FileSpreadsheet className="mr-1.5 h-3.5 w-3.5" /> Excel
             </Button>
           )}
           {exportFormats.includes("pdf") && (
