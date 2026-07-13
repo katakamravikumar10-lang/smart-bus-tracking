@@ -25,10 +25,11 @@ import {
   YAxis,
 } from "recharts";
 import { Activity, BarChart3, Clock, TrendingUp, RotateCw } from "lucide-react";
+import type { AcademicYear } from "@/lib/academic-year";
 
 type BusRow = { id: string; bus_number: string; route_id: string | null };
 type RouteRow = { id: string; name: string };
-type Person = { id: string; full_name: string | null; email: string | null };
+type Person = { id: string; full_name: string | null; email: string | null; academic_year_id?: string | null; branch?: string | null; year_of_study?: number | null; section?: string | null; student_status?: string | null };
 type Trip = {
   id: string;
   bus_id: string;
@@ -37,6 +38,7 @@ type Trip = {
   ended_at: string | null;
   status: string;
   notes: string | null;
+  academic_year_id?: string | null;
 };
 
 function ymd(d: Date) {
@@ -55,10 +57,14 @@ export function AnalyticsTab({
   buses,
   routes,
   drivers,
+  students,
+  years,
 }: {
   buses: BusRow[];
   routes: RouteRow[];
   drivers: Person[];
+  students: Person[];
+  years: AcademicYear[];
 }) {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,6 +73,15 @@ export function AnalyticsTab({
   const [busFilter, setBusFilter] = useState("all");
   const [driverFilter, setDriverFilter] = useState("all");
   const [routeFilter, setRouteFilter] = useState("all");
+  const [yearFilter, setYearFilter] = useState("all");
+  const [branchFilter, setBranchFilter] = useState("all");
+  const [yosFilter, setYosFilter] = useState("all");
+  const [sectionFilter, setSectionFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  const branches = Array.from(new Set(students.map((s) => s.branch).filter(Boolean))) as string[];
+  const sections = Array.from(new Set(students.map((s) => s.section).filter(Boolean))) as string[];
+  const yosList = Array.from(new Set(students.map((s) => s.year_of_study).filter((v): v is number => v != null))).sort();
 
   async function load() {
     setLoading(true);
@@ -96,9 +111,21 @@ export function AnalyticsTab({
         const b = buses.find((bb) => bb.id === t.bus_id);
         if ((b?.route_id ?? "") !== routeFilter) return false;
       }
+      if (yearFilter !== "all" && (t.academic_year_id ?? "none") !== yearFilter) return false;
       return true;
     });
-  }, [trips, busFilter, driverFilter, routeFilter, buses]);
+  }, [trips, busFilter, driverFilter, routeFilter, yearFilter, buses]);
+
+  const filteredStudents = useMemo(() => {
+    return students.filter((s) => {
+      if (yearFilter !== "all" && (s.academic_year_id ?? "none") !== yearFilter) return false;
+      if (branchFilter !== "all" && (s.branch ?? "") !== branchFilter) return false;
+      if (yosFilter !== "all" && String(s.year_of_study ?? "") !== yosFilter) return false;
+      if (sectionFilter !== "all" && (s.section ?? "") !== sectionFilter) return false;
+      if (statusFilter !== "all" && (s.student_status ?? "active") !== statusFilter) return false;
+      return true;
+    });
+  }, [students, yearFilter, branchFilter, yosFilter, sectionFilter, statusFilter]);
 
   // Daily usage series
   const daily = useMemo(() => {
@@ -264,6 +291,17 @@ export function AnalyticsTab({
             <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
           </div>
           <div className="space-y-1.5">
+            <Label className="text-xs">Academic year</Label>
+            <Select value={yearFilter} onValueChange={setYearFilter}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All years</SelectItem>
+                <SelectItem value="none">Unassigned</SelectItem>
+                {years.map((y) => (<SelectItem key={y.id} value={y.id}>{y.name}</SelectItem>))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
             <Label className="text-xs">Bus</Label>
             <Select value={busFilter} onValueChange={setBusFilter}>
               <SelectTrigger><SelectValue /></SelectTrigger>
@@ -299,10 +337,59 @@ export function AnalyticsTab({
               </SelectContent>
             </Select>
           </div>
+          {branches.length > 0 && (
+            <div className="space-y-1.5">
+              <Label className="text-xs">Branch</Label>
+              <Select value={branchFilter} onValueChange={setBranchFilter}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All branches</SelectItem>
+                  {branches.map((b) => (<SelectItem key={b} value={b}>{b}</SelectItem>))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          {yosList.length > 0 && (
+            <div className="space-y-1.5">
+              <Label className="text-xs">Year of study</Label>
+              <Select value={yosFilter} onValueChange={setYosFilter}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  {yosList.map((y) => (<SelectItem key={y} value={String(y)}>Year {y}</SelectItem>))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          {sections.length > 0 && (
+            <div className="space-y-1.5">
+              <Label className="text-xs">Section</Label>
+              <Select value={sectionFilter} onValueChange={setSectionFilter}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All sections</SelectItem>
+                  {sections.map((s) => (<SelectItem key={s} value={s}>{s}</SelectItem>))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          <div className="space-y-1.5">
+            <Label className="text-xs">Student status</Label>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                {["active", "graduated", "archived", "inactive"].map((s) => (<SelectItem key={s} value={s}>{s}</SelectItem>))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="flex items-end">
             <Button variant="outline" onClick={load} className="w-full">
               <RotateCw className="mr-1 h-4 w-4" /> Refresh
             </Button>
+          </div>
+          <div className="sm:col-span-6 text-xs text-muted-foreground">
+            {filteredStudents.length} students match student filters.
           </div>
         </CardContent>
       </Card>

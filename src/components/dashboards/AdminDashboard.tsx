@@ -38,6 +38,7 @@ import { ImportStudentsTab } from "@/components/dashboards/ImportStudentsTab";
 import { BarChart3, Clock, Activity } from "lucide-react";
 import { useAppSettings } from "@/lib/app-settings";
 import { audit } from "@/lib/audit";
+import { useAcademicYears, type AcademicYear } from "@/lib/academic-year";
 import { StatCard } from "@/components/StatCard";
 import { FleetCharts } from "@/components/FleetCharts";
 import { DataTable, type Column } from "@/components/DataTable";
@@ -56,10 +57,25 @@ type BusRow = { id: string; bus_number: string; capacity: number; route_id: stri
 type RouteRow = { id: string; name: string; description: string | null; stops: Stop[]; active: boolean };
 type Stop = { name: string; lat: number; lng: number; order?: number };
 type Loc = { bus_id: string; lat: number; lng: number; updated_at: string };
-type Person = { id: string; full_name: string | null; email: string | null; phone: string | null; department?: string | null; roll_no?: string | null; employee_id?: string | null; license_no?: string | null };
-type Trip = { id: string; bus_id: string; driver_id: string; started_at: string; ended_at: string | null; status: string; notes: string | null };
+type Person = {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  phone: string | null;
+  department?: string | null;
+  roll_no?: string | null;
+  employee_id?: string | null;
+  license_no?: string | null;
+  academic_year_id?: string | null;
+  branch?: string | null;
+  year_of_study?: number | null;
+  section?: string | null;
+  student_status?: string | null;
+  created_at?: string | null;
+};
+type Trip = { id: string; bus_id: string; driver_id: string; started_at: string; ended_at: string | null; status: string; notes: string | null; academic_year_id?: string | null };
 type Feedback = { id: string; user_id: string; bus_id: string | null; subject: string; message: string; resolved: boolean; created_at: string };
-type Announcement = { id: string; title: string; body: string; created_at: string; is_emergency: boolean; target_role: string | null; route_id: string | null };
+type Announcement = { id: string; title: string; body: string; created_at: string; is_emergency: boolean; target_role: string | null; route_id: string | null; academic_year_id?: string | null };
 
 export function AdminDashboard({ user }: { user: User }) {
   void user;
@@ -69,12 +85,13 @@ export function AdminDashboard({ user }: { user: User }) {
   const [drivers, setDrivers] = useState<Person[]>([]);
   const [students, setStudents] = useState<Person[]>([]);
   const [faculty, setFaculty] = useState<Person[]>([]);
-  const [driverAssignments, setDriverAssignments] = useState<{ id: string; driver_id: string; bus_id: string; active: boolean }[]>([]);
-  const [studentAssignments, setStudentAssignments] = useState<{ id: string; user_id: string; bus_id: string; boarding_stop: string | null }[]>([]);
+  const [driverAssignments, setDriverAssignments] = useState<{ id: string; driver_id: string; bus_id: string; active: boolean; academic_year_id?: string | null }[]>([]);
+  const [studentAssignments, setStudentAssignments] = useState<{ id: string; user_id: string; bus_id: string; boarding_stop: string | null; academic_year_id?: string | null }[]>([]);
   const [trips, setTrips] = useState<Trip[]>([]);
   const [feedback, setFeedback] = useState<Feedback[]>([]);
   const [loading, setLoading] = useState(true);
   const { settings } = useAppSettings();
+  const { active: activeYear, years: academicYears } = useAcademicYears();
   const demoEnabled = settings.demoModeEnabled;
   const [tabHistory, setTabHistory] = useState<string[]>(() => {
     if (typeof window === "undefined") return ["buses"];
@@ -152,7 +169,7 @@ export function AdminDashboard({ user }: { user: User }) {
     if (allIds.length) {
       const { data: profs } = await supabase
         .from("profiles")
-        .select("id,full_name,email,phone,department,roll_no,employee_id,license_no")
+        .select("id,full_name,email,phone,department,roll_no,employee_id,license_no,academic_year_id,branch,year_of_study,section,student_status,created_at")
         .in("id", allIds);
       const list = (profs ?? []) as Person[];
       const byId = new Map(list.map((p) => [p.id, p]));
@@ -195,6 +212,14 @@ export function AdminDashboard({ user }: { user: User }) {
   const tripsWeek = trips.filter((t) => new Date(t.started_at).getTime() >= weekAgo).length;
   const tripsMonth = trips.filter((t) => new Date(t.started_at).getTime() >= monthAgo).length;
 
+  const activeStudentCount = students.filter((s) => (s.student_status ?? "active") === "active").length;
+  const graduatedCount = students.filter((s) => s.student_status === "graduated").length;
+  const archivedStudentCount = students.filter((s) => s.student_status === "archived").length;
+  const archivedYearCount = academicYears.filter((y) => y.status === "archived").length;
+  const newAdmissionsCount = students.filter((s) =>
+    activeYear ? s.academic_year_id === activeYear.id : false
+  ).length;
+
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -214,6 +239,15 @@ export function AdminDashboard({ user }: { user: User }) {
         <StatCard label="Faculty" value={faculty.length} icon={BookOpen} tone="accent" hint="Registered users" />
         <StatCard label="Drivers" value={drivers.length} icon={Users} tone="warning" hint={`${driverAssignments.filter((a) => a.active).length} assigned`} />
         <StatCard label="Trips today" value={tripsToday} icon={Activity} tone="success" hint={`${tripsWeek} this week · ${tripsMonth} this month`} />
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        <StatCard label="Academic year" value={activeYear?.name ?? "—"} icon={CalendarDays} tone="primary" hint={activeYear ? (activeYear.locked ? "Locked" : "Active") : "None active"} />
+        <StatCard label="Active students" value={activeStudentCount} icon={GraduationCap} tone="success" hint="Enrolled this year" />
+        <StatCard label="Graduated" value={graduatedCount} icon={BookOpen} tone="accent" hint="Alumni on record" />
+        <StatCard label="Archived students" value={archivedStudentCount} icon={History} tone="warning" hint="Historical accounts" />
+        <StatCard label="New admissions" value={newAdmissionsCount} icon={ArrowUpRight} tone="primary" hint={activeYear ? `${activeYear.name}` : "No active year"} />
+        <StatCard label="Archived years" value={archivedYearCount} icon={CalendarDays} tone="accent" hint={`${academicYears.length} total`} />
       </div>
 
       <FleetCharts buses={buses.map((b) => ({ status: b.status, active: b.active }))} />
@@ -258,16 +292,16 @@ export function AdminDashboard({ user }: { user: User }) {
 
         <TabsContent value="buses"><BusesTab buses={buses} routes={routes} loading={loading} onChange={refreshAll} /></TabsContent>
         <TabsContent value="routes"><RoutesTab routes={routes} loading={loading} onChange={refreshAll} /></TabsContent>
-        <TabsContent value="drivers"><DriversTab drivers={drivers} buses={buses} assignments={driverAssignments} loading={loading} onChange={refreshAll} /></TabsContent>
-        <TabsContent value="students"><StudentsTab students={students} buses={buses} assignments={studentAssignments} loading={loading} /></TabsContent>
-        <TabsContent value="faculty"><FacultyTab faculty={faculty} loading={loading} /></TabsContent>
+        <TabsContent value="drivers"><DriversTab drivers={drivers} buses={buses} assignments={driverAssignments} loading={loading} onChange={refreshAll} years={academicYears} /></TabsContent>
+        <TabsContent value="students"><StudentsTab students={students} buses={buses} assignments={studentAssignments} loading={loading} years={academicYears} /></TabsContent>
+        <TabsContent value="faculty"><FacultyTab faculty={faculty} loading={loading} years={academicYears} /></TabsContent>
         <TabsContent value="years"><AcademicYearsTab /></TabsContent>
         <TabsContent value="promote"><PromoteStudentsTab /></TabsContent>
         <TabsContent value="import"><ImportStudentsTab /></TabsContent>
-        <TabsContent value="announce"><AnnouncementsTab routes={routes} /></TabsContent>
-        <TabsContent value="trips"><TripsTab trips={trips} buses={buses} drivers={drivers} loading={loading} /></TabsContent>
-        <TabsContent value="analytics"><AnalyticsTab buses={buses} routes={routes} drivers={drivers} /></TabsContent>
-        <TabsContent value="reports"><ReportsTab feedback={feedback} buses={buses} loading={loading} onChange={refreshAll} /></TabsContent>
+        <TabsContent value="announce"><AnnouncementsTab routes={routes} activeYear={activeYear} years={academicYears} /></TabsContent>
+        <TabsContent value="trips"><TripsTab trips={trips} buses={buses} drivers={drivers} loading={loading} years={academicYears} /></TabsContent>
+        <TabsContent value="analytics"><AnalyticsTab buses={buses} routes={routes} drivers={drivers} students={students} years={academicYears} /></TabsContent>
+        <TabsContent value="reports"><ReportsTab feedback={feedback} buses={buses} loading={loading} onChange={refreshAll} allProfiles={[...students, ...faculty, ...drivers]} years={academicYears} /></TabsContent>
         {demoEnabled && (
           <TabsContent value="demo"><DemoModeTab onDataChange={refreshAll} /></TabsContent>
         )}
@@ -517,16 +551,19 @@ function RoutesTab({ routes, loading, onChange }: { routes: RouteRow[]; loading:
   );
 }
 
-function DriversTab({ drivers, buses, assignments, loading, onChange }: { drivers: Person[]; buses: BusRow[]; assignments: { id: string; driver_id: string; bus_id: string; active: boolean }[]; loading: boolean; onChange: () => void }) {
+function DriversTab({ drivers, buses, assignments, loading, onChange, years }: { drivers: Person[]; buses: BusRow[]; assignments: { id: string; driver_id: string; bus_id: string; active: boolean; academic_year_id?: string | null }[]; loading: boolean; onChange: () => void; years: AcademicYear[] }) {
   const [busFilter, setBusFilter] = useState("all");
+  const [yearFilter, setYearFilter] = useState("all");
   const [viewing, setViewing] = useState<Person | null>(null);
 
   async function assign(driverId: string, busId: string) {
     const prev = assignments.find((x) => x.driver_id === driverId && x.active);
+    const { data: yr } = await supabase.from("academic_years").select("id").eq("status", "active").maybeSingle();
+    if (!yr?.id) return toast.error("No active academic year. Activate one first.");
     await supabase.from("driver_assignments").update({ active: false }).eq("driver_id", driverId);
-    const { error } = await supabase.from("driver_assignments").upsert({ driver_id: driverId, bus_id: busId, active: true }, { onConflict: "driver_id,bus_id" });
+    const { error } = await supabase.from("driver_assignments").upsert({ driver_id: driverId, bus_id: busId, active: true, academic_year_id: yr.id }, { onConflict: "driver_id,bus_id" });
     if (error) return toast.error(error.message);
-    audit("driver.assign", { entityType: "driver_assignment", entityId: driverId, before: prev, after: { driver_id: driverId, bus_id: busId, active: true } });
+    audit("driver.assign", { entityType: "driver_assignment", entityId: driverId, before: prev, after: { driver_id: driverId, bus_id: busId, active: true, academic_year_id: yr.id } });
     onChange();
     toast.success("Assigned");
   }
@@ -543,10 +580,18 @@ function DriversTab({ drivers, buses, assignments, loading, onChange }: { driver
   }
 
   const filtered = useMemo(() => {
-    if (busFilter === "all") return drivers;
-    if (busFilter === "unassigned") return drivers.filter((d) => !currentBusOf(d.id));
-    return drivers.filter((d) => currentBusOf(d.id)?.bus?.id === busFilter);
-  }, [drivers, busFilter, assignments]);
+    return drivers.filter((d) => {
+      const cur = currentBusOf(d.id);
+      if (yearFilter !== "all") {
+        const ay = cur?.assignment.academic_year_id ?? null;
+        if ((ay ?? "none") !== yearFilter) return false;
+      }
+      if (busFilter === "all") return true;
+      if (busFilter === "unassigned") return !cur;
+      return cur?.bus?.id === busFilter;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [drivers, busFilter, yearFilter, assignments]);
 
   const columns: Column<Person>[] = [
     { key: "name", header: "Driver", sortValue: (d) => d.full_name ?? "", csv: (d) => d.full_name ?? "",
@@ -599,6 +644,15 @@ function DriversTab({ drivers, buses, assignments, loading, onChange }: { driver
         pdfTitle="Drivers"
         emptyMessage="No drivers registered yet."
         filters={
+          <>
+          <Select value={yearFilter} onValueChange={setYearFilter}>
+            <SelectTrigger className="h-9 w-40"><SelectValue placeholder="Academic year" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All years</SelectItem>
+              <SelectItem value="none">Unassigned</SelectItem>
+              {years.map((y) => <SelectItem key={y.id} value={y.id}>{y.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
           <Select value={busFilter} onValueChange={setBusFilter}>
             <SelectTrigger className="h-9 w-44"><SelectValue placeholder="Bus" /></SelectTrigger>
             <SelectContent>
@@ -607,6 +661,7 @@ function DriversTab({ drivers, buses, assignments, loading, onChange }: { driver
               {buses.map((b) => <SelectItem key={b.id} value={b.id}>Bus {b.bus_number}</SelectItem>)}
             </SelectContent>
           </Select>
+          </>
         }
       />
       <PersonDialog person={viewing} onClose={() => setViewing(null)} role="Driver" />
@@ -614,12 +669,20 @@ function DriversTab({ drivers, buses, assignments, loading, onChange }: { driver
   );
 }
 
-function StudentsTab({ students, buses, assignments, loading }: { students: Person[]; buses: BusRow[]; assignments: { id: string; user_id: string; bus_id: string; boarding_stop: string | null }[]; loading: boolean }) {
+function StudentsTab({ students, buses, assignments, loading, years }: { students: Person[]; buses: BusRow[]; assignments: { id: string; user_id: string; bus_id: string; boarding_stop: string | null; academic_year_id?: string | null }[]; loading: boolean; years: AcademicYear[] }) {
   const [busFilter, setBusFilter] = useState("all");
   const [deptFilter, setDeptFilter] = useState("all");
+  const [yearFilter, setYearFilter] = useState("all");
+  const [branchFilter, setBranchFilter] = useState("all");
+  const [yosFilter, setYosFilter] = useState("all");
+  const [sectionFilter, setSectionFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [viewing, setViewing] = useState<Person | null>(null);
 
   const departments = Array.from(new Set(students.map((s) => s.department).filter(Boolean))) as string[];
+  const branches = Array.from(new Set(students.map((s) => s.branch).filter(Boolean))) as string[];
+  const sections = Array.from(new Set(students.map((s) => s.section).filter(Boolean))) as string[];
+  const yosList = Array.from(new Set(students.map((s) => s.year_of_study).filter((v): v is number => v != null))).sort();
 
   function busOf(userId: string) {
     const a = assignments.find((x) => x.user_id === userId);
@@ -629,16 +692,25 @@ function StudentsTab({ students, buses, assignments, loading }: { students: Pers
   const filtered = useMemo(() => {
     return students.filter((s) => {
       if (deptFilter !== "all" && s.department !== deptFilter) return false;
+      if (yearFilter !== "all" && (s.academic_year_id ?? "none") !== yearFilter) return false;
+      if (branchFilter !== "all" && (s.branch ?? "") !== branchFilter) return false;
+      if (yosFilter !== "all" && String(s.year_of_study ?? "") !== yosFilter) return false;
+      if (sectionFilter !== "all" && (s.section ?? "") !== sectionFilter) return false;
+      if (statusFilter !== "all" && (s.student_status ?? "active") !== statusFilter) return false;
       if (busFilter === "all") return true;
       if (busFilter === "unassigned") return !busOf(s.id);
       return busOf(s.id)?.id === busFilter;
     });
-  }, [students, busFilter, deptFilter, assignments]);
+  }, [students, busFilter, deptFilter, yearFilter, branchFilter, yosFilter, sectionFilter, statusFilter, assignments]);
 
   const columns: Column<Person>[] = [
     { key: "name", header: "Student", sortValue: (s) => s.full_name ?? "", csv: (s) => s.full_name ?? "", accessor: (s) => <span className="font-medium">{s.full_name ?? "(no name)"}</span> },
     { key: "roll", header: "Roll no", sortValue: (s) => s.roll_no ?? "", csv: (s) => s.roll_no ?? "", accessor: (s) => <span className="tabular-nums">{s.roll_no ?? "—"}</span> },
     { key: "dept", header: "Department", sortValue: (s) => s.department ?? "", csv: (s) => s.department ?? "", accessor: (s) => <span className="text-muted-foreground">{s.department ?? "—"}</span> },
+    { key: "year", header: "Year", sortValue: (s) => s.year_of_study ?? 0, csv: (s) => s.year_of_study ?? "", accessor: (s) => <span className="tabular-nums">{s.year_of_study ?? "—"}</span> },
+    { key: "section", header: "Section", sortValue: (s) => s.section ?? "", csv: (s) => s.section ?? "", accessor: (s) => <span>{s.section ?? "—"}</span> },
+    { key: "acad", header: "Academic year", sortValue: (s) => years.find((y) => y.id === s.academic_year_id)?.name ?? "", csv: (s) => years.find((y) => y.id === s.academic_year_id)?.name ?? "", accessor: (s) => <span className="text-muted-foreground">{years.find((y) => y.id === s.academic_year_id)?.name ?? "—"}</span> },
+    { key: "status", header: "Status", sortValue: (s) => s.student_status ?? "", csv: (s) => s.student_status ?? "active", accessor: (s) => <StatusBadge status={s.student_status ?? "active"} /> },
     { key: "email", header: "Email", sortValue: (s) => s.email ?? "", csv: (s) => s.email ?? "", accessor: (s) => <span className="text-muted-foreground">{s.email ?? "—"}</span> },
     { key: "bus", header: "Bus",
       sortValue: (s) => busOf(s.id)?.bus_number ?? "",
@@ -657,12 +729,54 @@ function StudentsTab({ students, buses, assignments, loading }: { students: Pers
         rows={filtered}
         columns={columns}
         loading={loading}
-        searchKeys={(s) => `${s.full_name ?? ""} ${s.email ?? ""} ${s.roll_no ?? ""} ${s.department ?? ""}`}
+        searchKeys={(s) => `${s.full_name ?? ""} ${s.email ?? ""} ${s.roll_no ?? ""} ${s.department ?? ""} ${s.branch ?? ""} ${s.section ?? ""} ${s.year_of_study ?? ""} ${s.student_status ?? ""}`}
         csvFilename="students"
         pdfTitle="Students"
         emptyMessage="No students match these filters."
         filters={
           <>
+            <Select value={yearFilter} onValueChange={setYearFilter}>
+              <SelectTrigger className="h-9 w-40"><SelectValue placeholder="Academic year" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All years</SelectItem>
+                <SelectItem value="none">Unassigned</SelectItem>
+                {years.map((y) => <SelectItem key={y.id} value={y.id}>{y.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            {branches.length > 0 && (
+              <Select value={branchFilter} onValueChange={setBranchFilter}>
+                <SelectTrigger className="h-9 w-36"><SelectValue placeholder="Branch" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All branches</SelectItem>
+                  {branches.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
+            {yosList.length > 0 && (
+              <Select value={yosFilter} onValueChange={setYosFilter}>
+                <SelectTrigger className="h-9 w-28"><SelectValue placeholder="Year" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All years</SelectItem>
+                  {yosList.map((y) => <SelectItem key={y} value={String(y)}>Year {y}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
+            {sections.length > 0 && (
+              <Select value={sectionFilter} onValueChange={setSectionFilter}>
+                <SelectTrigger className="h-9 w-28"><SelectValue placeholder="Section" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All sections</SelectItem>
+                  {sections.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="h-9 w-32"><SelectValue placeholder="Status" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                {["active", "graduated", "archived", "inactive"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              </SelectContent>
+            </Select>
             <Select value={deptFilter} onValueChange={setDeptFilter}>
               <SelectTrigger className="h-9 w-40"><SelectValue placeholder="Department" /></SelectTrigger>
               <SelectContent>
@@ -686,11 +800,21 @@ function StudentsTab({ students, buses, assignments, loading }: { students: Pers
   );
 }
 
-function FacultyTab({ faculty, loading }: { faculty: Person[]; loading: boolean }) {
+function FacultyTab({ faculty, loading, years }: { faculty: Person[]; loading: boolean; years: AcademicYear[] }) {
   const [deptFilter, setDeptFilter] = useState("all");
+  const [yearFilter, setYearFilter] = useState("all");
+  const [branchFilter, setBranchFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [viewing, setViewing] = useState<Person | null>(null);
   const departments = Array.from(new Set(faculty.map((s) => s.department).filter(Boolean))) as string[];
-  const filtered = deptFilter === "all" ? faculty : faculty.filter((f) => f.department === deptFilter);
+  const branches = Array.from(new Set(faculty.map((s) => s.branch).filter(Boolean))) as string[];
+  const filtered = faculty.filter((f) => {
+    if (deptFilter !== "all" && f.department !== deptFilter) return false;
+    if (yearFilter !== "all" && (f.academic_year_id ?? "none") !== yearFilter) return false;
+    if (branchFilter !== "all" && (f.branch ?? "") !== branchFilter) return false;
+    if (statusFilter !== "all" && (f.student_status ?? "active") !== statusFilter) return false;
+    return true;
+  });
 
   const columns: Column<Person>[] = [
     { key: "name", header: "Name", sortValue: (f) => f.full_name ?? "", csv: (f) => f.full_name ?? "", accessor: (f) => <span className="font-medium">{f.full_name ?? "(no name)"}</span> },
@@ -713,6 +837,31 @@ function FacultyTab({ faculty, loading }: { faculty: Person[]; loading: boolean 
         pdfTitle="Faculty"
         emptyMessage="No faculty records yet."
         filters={
+          <>
+          <Select value={yearFilter} onValueChange={setYearFilter}>
+            <SelectTrigger className="h-9 w-40"><SelectValue placeholder="Academic year" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All years</SelectItem>
+              <SelectItem value="none">Unassigned</SelectItem>
+              {years.map((y) => <SelectItem key={y.id} value={y.id}>{y.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          {branches.length > 0 && (
+            <Select value={branchFilter} onValueChange={setBranchFilter}>
+              <SelectTrigger className="h-9 w-36"><SelectValue placeholder="Branch" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All branches</SelectItem>
+                {branches.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          )}
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="h-9 w-32"><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              {["active", "archived", "inactive"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            </SelectContent>
+          </Select>
           <Select value={deptFilter} onValueChange={setDeptFilter}>
             <SelectTrigger className="h-9 w-40"><SelectValue placeholder="Department" /></SelectTrigger>
             <SelectContent>
@@ -720,6 +869,7 @@ function FacultyTab({ faculty, loading }: { faculty: Person[]; loading: boolean 
               {departments.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
             </SelectContent>
           </Select>
+          </>
         }
       />
       <PersonDialog person={viewing} onClose={() => setViewing(null)} role="Faculty" />
@@ -727,11 +877,12 @@ function FacultyTab({ faculty, loading }: { faculty: Person[]; loading: boolean 
   );
 }
 
-function TripsTab({ trips, buses, drivers, loading }: { trips: Trip[]; buses: BusRow[]; drivers: Person[]; loading: boolean }) {
+function TripsTab({ trips, buses, drivers, loading, years }: { trips: Trip[]; buses: BusRow[]; drivers: Person[]; loading: boolean; years: AcademicYear[] }) {
   const [statusFilter, setStatusFilter] = useState("all");
   const [busFilter, setBusFilter] = useState("all");
   const [driverFilter, setDriverFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("");
+  const [yearFilter, setYearFilter] = useState("all");
 
   const filtered = useMemo(() => {
     return trips.filter((t) => {
@@ -739,9 +890,10 @@ function TripsTab({ trips, buses, drivers, loading }: { trips: Trip[]; buses: Bu
       if (busFilter !== "all" && t.bus_id !== busFilter) return false;
       if (driverFilter !== "all" && t.driver_id !== driverFilter) return false;
       if (dateFilter && !t.started_at.startsWith(dateFilter)) return false;
+      if (yearFilter !== "all" && (t.academic_year_id ?? "none") !== yearFilter) return false;
       return true;
     });
-  }, [trips, statusFilter, busFilter, driverFilter, dateFilter]);
+  }, [trips, statusFilter, busFilter, driverFilter, dateFilter, yearFilter]);
 
   function busName(id: string) { return buses.find((b) => b.id === id)?.bus_number ?? "—"; }
   function driverName(id: string) { return drivers.find((d) => d.id === id)?.full_name ?? "—"; }
@@ -778,6 +930,14 @@ function TripsTab({ trips, buses, drivers, loading }: { trips: Trip[]; buses: Bu
         pageSize={15}
         filters={
           <>
+            <Select value={yearFilter} onValueChange={setYearFilter}>
+              <SelectTrigger className="h-9 w-40"><SelectValue placeholder="Academic year" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All years</SelectItem>
+                <SelectItem value="none">Unassigned</SelectItem>
+                {years.map((y) => <SelectItem key={y.id} value={y.id}>{y.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="h-9 w-36"><SelectValue placeholder="Status" /></SelectTrigger>
               <SelectContent>
@@ -807,10 +967,12 @@ function TripsTab({ trips, buses, drivers, loading }: { trips: Trip[]; buses: Bu
   );
 }
 
-function ReportsTab({ feedback, buses, loading, onChange }: { feedback: Feedback[]; buses: BusRow[]; loading: boolean; onChange: () => void }) {
+function ReportsTab({ feedback, buses, loading, onChange, allProfiles, years }: { feedback: Feedback[]; buses: BusRow[]; loading: boolean; onChange: () => void; allProfiles: Person[]; years: AcademicYear[] }) {
   const [statusFilter, setStatusFilter] = useState("all");
   const [busFilter, setBusFilter] = useState("all");
+  const [yearFilter, setYearFilter] = useState("all");
   const [viewing, setViewing] = useState<Feedback | null>(null);
+  const yearOfUser = (uid: string) => allProfiles.find((p) => p.id === uid)?.academic_year_id ?? null;
 
   async function resolve(id: string, resolved: boolean) {
     await supabase.from("feedback").update({ resolved }).eq("id", id);
@@ -830,9 +992,11 @@ function ReportsTab({ feedback, buses, loading, onChange }: { feedback: Feedback
       if (statusFilter === "resolved" && !f.resolved) return false;
       if (statusFilter === "open" && f.resolved) return false;
       if (busFilter !== "all" && (f.bus_id ?? "none") !== busFilter) return false;
+      if (yearFilter !== "all" && (yearOfUser(f.user_id) ?? "none") !== yearFilter) return false;
       return true;
     });
-  }, [feedback, statusFilter, busFilter]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [feedback, statusFilter, busFilter, yearFilter, allProfiles]);
 
   function busName(id: string | null) { return id ? buses.find((b) => b.id === id)?.bus_number ?? "—" : "—"; }
 
@@ -868,6 +1032,14 @@ function ReportsTab({ feedback, buses, loading, onChange }: { feedback: Feedback
         emptyMessage="No reports match these filters."
         filters={
           <>
+            <Select value={yearFilter} onValueChange={setYearFilter}>
+              <SelectTrigger className="h-9 w-40"><SelectValue placeholder="Academic year" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All years</SelectItem>
+                <SelectItem value="none">Unassigned</SelectItem>
+                {years.map((y) => <SelectItem key={y.id} value={y.id}>{y.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="h-9 w-36"><SelectValue placeholder="Status" /></SelectTrigger>
               <SelectContent>
@@ -909,7 +1081,7 @@ function ReportsTab({ feedback, buses, loading, onChange }: { feedback: Feedback
   );
 }
 
-function AnnouncementsTab({ routes }: { routes: RouteRow[] }) {
+function AnnouncementsTab({ routes, activeYear, years }: { routes: RouteRow[]; activeYear: AcademicYear | null; years: AcademicYear[] }) {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [role, setRole] = useState<string>("all");
@@ -919,10 +1091,11 @@ function AnnouncementsTab({ routes }: { routes: RouteRow[] }) {
   const [loading, setLoading] = useState(true);
   const [audienceFilter, setAudienceFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [yearFilter, setYearFilter] = useState("all");
 
   async function load() {
     setLoading(true);
-    const { data } = await supabase.from("announcements").select("id,title,body,created_at,is_emergency,target_role,route_id").order("created_at", { ascending: false }).limit(200);
+    const { data } = await supabase.from("announcements").select("id,title,body,created_at,is_emergency,target_role,route_id,academic_year_id").order("created_at", { ascending: false }).limit(200);
     setList((data ?? []) as Announcement[]);
     setLoading(false);
   }
@@ -930,6 +1103,7 @@ function AnnouncementsTab({ routes }: { routes: RouteRow[] }) {
 
   async function send() {
     if (!title.trim() || !body.trim()) return toast.error("Fill title and body");
+    if (!activeYear?.id) return toast.error("No active academic year. Activate one first.");
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) return toast.error("You must be signed in");
     const payload = {
@@ -938,6 +1112,7 @@ function AnnouncementsTab({ routes }: { routes: RouteRow[] }) {
       route_id: routeId || null,
       is_emergency: emergency,
       created_by: u.user.id,
+      academic_year_id: activeYear.id,
     };
     const { data: created, error } = await supabase.from("announcements").insert(payload).select("id").single();
     if (error) return toast.error(error.message);
@@ -964,9 +1139,10 @@ function AnnouncementsTab({ routes }: { routes: RouteRow[] }) {
       if (audienceFilter !== "all" && (a.target_role ?? "all") !== audienceFilter) return false;
       if (typeFilter === "emergency" && !a.is_emergency) return false;
       if (typeFilter === "normal" && a.is_emergency) return false;
+      if (yearFilter !== "all" && (a.academic_year_id ?? "none") !== yearFilter) return false;
       return true;
     });
-  }, [list, audienceFilter, typeFilter]);
+  }, [list, audienceFilter, typeFilter, yearFilter]);
 
   function routeName(id: string | null) { return id ? routes.find((r) => r.id === id)?.name ?? "—" : "All routes"; }
 
@@ -1024,6 +1200,14 @@ function AnnouncementsTab({ routes }: { routes: RouteRow[] }) {
         emptyMessage="No announcements match these filters."
         filters={
           <>
+            <Select value={yearFilter} onValueChange={setYearFilter}>
+              <SelectTrigger className="h-9 w-40"><SelectValue placeholder="Academic year" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All years</SelectItem>
+                <SelectItem value="none">Unassigned</SelectItem>
+                {years.map((y) => <SelectItem key={y.id} value={y.id}>{y.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
             <Select value={audienceFilter} onValueChange={setAudienceFilter}>
               <SelectTrigger className="h-9 w-36"><SelectValue placeholder="Audience" /></SelectTrigger>
               <SelectContent>
