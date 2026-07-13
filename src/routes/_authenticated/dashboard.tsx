@@ -7,6 +7,7 @@ import { FacultyDashboard } from "@/components/dashboards/FacultyDashboard";
 import { AdminDashboard } from "@/components/dashboards/AdminDashboard";
 import { DashboardSkeleton } from "@/components/DashboardSkeleton";
 import { AppFooter } from "@/components/AppFooter";
+import { useAdminSessionTimeout } from "@/lib/use-admin-session-timeout";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -19,6 +20,7 @@ function DashboardPage() {
   const { user, loading } = useSession();
   const { role, loading: roleLoading } = useRole(user);
   const profile = useProfile(user);
+  useAdminSessionTimeout(role);
 
   if (loading || roleLoading || !user) {
     return (

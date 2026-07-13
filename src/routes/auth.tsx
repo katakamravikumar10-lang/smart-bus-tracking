@@ -11,6 +11,8 @@ import collegeLogo from "@/assets/college-logo.png.asset.json";
 import collegeBanner from "@/assets/college-banner.jpg.asset.json";
 import founderImg from "@/assets/founder.webp.asset.json";
 import { MailCheck, RefreshCw, ArrowLeft } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { checkLoginLockout, recordLoginAttempt } from "@/lib/security.functions";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -159,12 +161,33 @@ function SignInForm({ onUnverified }: { onUnverified: (email: string) => void })
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotSent, setForgotSent] = useState(false);
+  const checkLockout = useServerFn(checkLoginLockout);
+  const recordAttempt = useServerFn(recordLoginAttempt);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+    // Check lockout first (5 failed attempts / 15 min)
+    try {
+      const lockout = await checkLockout({ data: { email } });
+      if (lockout.locked) {
+        setLoading(false);
+        toast.error("Account temporarily locked. Try again in 15 minutes.");
+        return;
+      }
+    } catch {
+      // Fail open if the lockout service is unreachable; auth still applies.
+    }
+
+    const { data: signInData, error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
+
+    // Record the attempt (best-effort, non-blocking failures)
+    recordAttempt({
+      data: { email, success: !error, userId: signInData?.user?.id },
+    }).catch(() => {});
+
     if (error) {
       const code = (error as { code?: string }).code;
       if (code === "email_not_confirmed" || /confirm/i.test(error.message)) {
