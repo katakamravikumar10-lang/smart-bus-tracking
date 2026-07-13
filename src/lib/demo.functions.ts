@@ -27,13 +27,20 @@ export const seedDemoData = createServerFn({ method: "POST" })
     }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // Demo credentials — server-side only. Prefer env overrides for real deployments.
+    // Demo credentials — server-side only. Must be provided via environment
+    // variables. No hardcoded defaults so credentials are never present in
+    // source, git history, or any bundle.
     const PW = {
-      admin: process.env.DEMO_ADMIN_PASSWORD ?? "Admin@123",
-      driver: process.env.DEMO_DRIVER_PASSWORD ?? "Driver@123",
-      faculty: process.env.DEMO_FACULTY_PASSWORD ?? "Faculty@123",
-      student: process.env.DEMO_STUDENT_PASSWORD ?? "Student@123",
+      admin: process.env.DEMO_ADMIN_PASSWORD,
+      driver: process.env.DEMO_DRIVER_PASSWORD,
+      faculty: process.env.DEMO_FACULTY_PASSWORD,
+      student: process.env.DEMO_STUDENT_PASSWORD,
     };
+    if (!PW.admin || !PW.driver || !PW.faculty || !PW.student) {
+      throw new Error(
+        "Demo seeding is disabled: set DEMO_ADMIN_PASSWORD, DEMO_DRIVER_PASSWORD, DEMO_FACULTY_PASSWORD, and DEMO_STUDENT_PASSWORD environment variables.",
+      );
+    }
 
     type Role = "admin" | "driver" | "faculty" | "student";
     const ACCOUNTS: Array<{
