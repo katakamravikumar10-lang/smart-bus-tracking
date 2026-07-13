@@ -74,7 +74,9 @@ export function FacultyDashboard({ user }: { user: User }) {
   const etaMin = distanceKm && myLoc?.speed && myLoc.speed > 2 ? Math.round((distanceKm / myLoc.speed) * 60) : null;
 
   async function saveAssignment(busId: string, stop: string) {
-    const { error } = await supabase.from("student_assignments").upsert({ user_id: user.id, bus_id: busId, boarding_stop: stop || null }, { onConflict: "user_id" });
+    const { data: yr } = await supabase.from("academic_years").select("id").eq("status", "active").maybeSingle();
+    if (!yr?.id) return toast.error("No active academic year. Ask admin to activate one.");
+    const { error } = await supabase.from("student_assignments").upsert({ user_id: user.id, bus_id: busId, boarding_stop: stop || null, academic_year_id: yr.id }, { onConflict: "user_id" });
     if (error) return toast.error(error.message);
     setAssignedBusId(busId);
     setBoardingStop(stop);

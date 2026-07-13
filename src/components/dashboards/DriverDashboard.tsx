@@ -309,7 +309,9 @@ export function DriverDashboard({ user }: { user: User }) {
     if (!busId) return toast.error("No bus assigned. Contact admin.");
     if (!navigator.geolocation) return toast.error("Geolocation not available");
     if (gpsState === "denied") return toast.error("Enable location permission first.");
-    const { data, error } = await supabase.from("trips").insert({ bus_id: busId, driver_id: user.id }).select("id").single();
+    const { data: yr } = await supabase.from("academic_years").select("id").eq("status", "active").maybeSingle();
+    if (!yr?.id) return toast.error("No active academic year. Ask admin to activate one.");
+    const { data, error } = await supabase.from("trips").insert({ bus_id: busId, driver_id: user.id, academic_year_id: yr.id }).select("id").single();
     if (error) return toast.error(error.message);
     setTripId(data.id);
     emittedRef.current = new Set();
