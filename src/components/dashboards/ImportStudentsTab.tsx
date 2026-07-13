@@ -44,7 +44,7 @@ export function ImportStudentsTab() {
           roll_number: String(out.roll_number ?? out.roll_no ?? out.roll ?? "").trim(),
           department: String(out.department ?? "").trim(),
           branch: String(out.branch ?? "").trim(),
-          year: out.year ?? out.year_of_study ?? "",
+          year: (out.year ?? out.year_of_study ?? "") as string | number,
           section: String(out.section ?? "").trim(),
           bus: String(out.bus ?? out.bus_number ?? "").trim(),
           boarding_point: String(out.boarding_point ?? out.boarding_stop ?? "").trim(),
