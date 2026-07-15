@@ -36,7 +36,6 @@ import { AcademicYearsTab } from "@/components/dashboards/AcademicYearsTab";
 import { PromoteStudentsTab } from "@/components/dashboards/PromoteStudentsTab";
 import { ImportStudentsTab } from "@/components/dashboards/ImportStudentsTab";
 import { BarChart3, Clock, Activity } from "lucide-react";
-import { useAppSettings } from "@/lib/app-settings";
 import { audit } from "@/lib/audit";
 import { isDemoModeAllowed } from "@/lib/demo-mode";
 import { useAcademicYears, type AcademicYear } from "@/lib/academic-year";
