@@ -16,7 +16,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Database, Play, Square, Trash2, FlaskConical } from "lucide-react";
+import { Database, Play, Square, Trash2, FlaskConical, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { useAppSettings } from "@/lib/app-settings";
 import { audit } from "@/lib/audit";
@@ -196,10 +196,20 @@ export function DemoModeTab({ onDataChange }: { onDataChange?: () => void } = {}
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <FlaskConical className="h-5 w-5 text-accent" /> Demo Mode
+          {demoEnabled && <Badge variant="secondary">Demo Mode</Badge>}
           {simulating && <Badge className="bg-emerald-500 text-white">Simulator running</Badge>}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {demoEnabled && (
+          <div className="flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-900 dark:text-amber-100">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            <div>
+              <strong>Demo Mode Active</strong> — No real data is being modified. All demo records
+              are tagged and isolated from production data.
+            </div>
+          </div>
+        )}
         <p className="text-sm text-muted-foreground">
           Seed realistic demo accounts, buses, routes, and trips for testing and demonstrations.
           Demo records are tagged and never mixed with production data. Demo account passwords are
