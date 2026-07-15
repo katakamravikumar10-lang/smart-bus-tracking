@@ -59,9 +59,29 @@ function loadGoogleMaps(): Promise<void> {
       return reject(new Error("Google Maps key missing"));
     }
     // Diagnostic: confirm key presence at runtime without exposing its value.
+    // Log a non-reversible SHA-256 fingerprint of the key so we can compare it
+    // to the key configured in Google Cloud without ever printing the key.
+    const source = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY
+      ? "VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY"
+      : "VITE_GOOGLE_MAPS_BROWSER_KEY";
     console.info(
-      `[BusMap] Google Maps key: present (len=${key.length}), channel: ${channel ? "present" : "missing"}`,
+      `[BusMap] Google Maps key: present (len=${key.length}), source=${source}, channel=${channel ? "present" : "missing"}`,
     );
+    console.info(`[BusMap] window.location.origin=${window.location.origin}`);
+    if (typeof crypto !== "undefined" && crypto.subtle) {
+      crypto.subtle
+        .digest("SHA-256", new TextEncoder().encode(key))
+        .then((buf) => {
+          const hex = Array.from(new Uint8Array(buf))
+            .map((b) => b.toString(16).padStart(2, "0"))
+            .join("");
+          console.info(
+            `[BusMap] Google Maps key SHA-256 fingerprint (first 16 hex chars): ${hex.slice(0, 16)}`,
+          );
+          console.info(`[BusMap] Google Maps key SHA-256 (full): ${hex}`);
+        })
+        .catch((e) => console.warn("[BusMap] fingerprint failed", e));
+    }
     const existing = document.querySelector<HTMLScriptElement>(
       'script[src*="maps.googleapis.com/maps/api/js"]',
     );
