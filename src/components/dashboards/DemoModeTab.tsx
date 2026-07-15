@@ -18,8 +18,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Database, Play, Square, Trash2, FlaskConical, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
-import { useAppSettings } from "@/lib/app-settings";
 import { audit } from "@/lib/audit";
+import { isDemoModeAllowed } from "@/lib/demo-mode";
 
 type BusRow = { id: string; bus_number: string; route_id: string | null; is_demo: boolean };
 type RouteRow = { id: string; name: string; stops: { name: string; lat: number; lng: number }[]; is_demo: boolean };
@@ -53,8 +53,7 @@ export function DemoModeTab({ onDataChange }: { onDataChange?: () => void } = {}
   const [busy, setBusy] = useState<null | "seed" | "clear">(null);
   const [simulating, setSimulating] = useState(false);
   const simRef = useRef<{ timer: number | null; buses: SimBus[] }>({ timer: null, buses: [] });
-  const { settings } = useAppSettings();
-  const demoEnabled = settings.demoModeEnabled;
+  const demoEnabled = isDemoModeAllowed();
 
   async function onSeed() {
     if (!demoEnabled) return toast.error("Enable Demo Mode in Settings first");
