@@ -29,15 +29,39 @@ type BusMapProps = {
 declare global {
   interface Window {
     __initBusMap?: () => void;
+    gm_authFailure?: () => void;
   }
 }
 
 const COLLEGE = { lat: 14.1497, lng: 79.8447 };
 
+// Google Maps reports auth/billing/referrer/API-enablement problems by
+// invoking window.gm_authFailure — NOT by rejecting the script load or
+// throwing from importLibrary. Covers: BillingNotEnabledMapError,
+// RefererNotAllowedMapError, InvalidKeyMapError, ApiNotActivatedMapError,
+// ExpiredKeyMapError, etc. We surface it via a CustomEvent so any mounted
+// BusMap can flip to the OpenStreetMap fallback.
+let googleAuthFailed = false;
+const GM_AUTH_FAIL_EVENT = "busmap:gm-auth-failure";
+if (typeof window !== "undefined") {
+  const prior = window.gm_authFailure;
+  window.gm_authFailure = () => {
+    googleAuthFailed = true;
+    console.warn("[BusMap] Google Maps auth failure — falling back to OpenStreetMap");
+    try {
+      prior?.();
+    } catch {
+      /* ignore */
+    }
+    window.dispatchEvent(new CustomEvent(GM_AUTH_FAIL_EVENT));
+  };
+}
+
 let mapsPromise: Promise<void> | null = null;
 function loadGoogleMaps(): Promise<void> {
   if (typeof window === "undefined") return Promise.reject(new Error("no window"));
   console.log("[BusMap] loadGoogleMaps() called");
+  if (googleAuthFailed) return Promise.reject(new Error("Google Maps auth failed"));
   if (window.google?.maps?.Map) return Promise.resolve();
   if (mapsPromise) return mapsPromise;
   mapsPromise = new Promise<void>((resolve, reject) => {
@@ -128,13 +152,20 @@ export function BusMap(props: BusMapProps) {
     let cancelled = false;
     loadGoogleMaps()
       .then(() => {
-        if (!cancelled) setMode("google");
+        if (cancelled) return;
+        if (googleAuthFailed) setMode("osm");
+        else setMode("google");
       })
       .catch(() => {
         if (!cancelled) setMode("osm");
       });
+    const onAuthFail = () => {
+      if (!cancelled) setMode("osm");
+    };
+    window.addEventListener(GM_AUTH_FAIL_EVENT, onAuthFail);
     return () => {
       cancelled = true;
+      window.removeEventListener(GM_AUTH_FAIL_EVENT, onAuthFail);
     };
   }, []);
 
