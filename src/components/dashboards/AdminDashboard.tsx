@@ -43,7 +43,6 @@ import { StatCard } from "@/components/StatCard";
 import { FleetCharts } from "@/components/FleetCharts";
 import { DataTable, type Column } from "@/components/DataTable";
 import { StatusBadge } from "@/components/StatusBadge";
-import { AddUserButton, UserRowActions } from "@/components/dashboards/UserManagement";
 import {
   Dialog,
   DialogContent,
@@ -293,8 +292,8 @@ export function AdminDashboard({ user }: { user: User }) {
         <TabsContent value="buses"><BusesTab buses={buses} routes={routes} loading={loading} onChange={refreshAll} /></TabsContent>
         <TabsContent value="routes"><RoutesTab routes={routes} loading={loading} onChange={refreshAll} /></TabsContent>
         <TabsContent value="drivers"><DriversTab drivers={drivers} buses={buses} assignments={driverAssignments} loading={loading} onChange={refreshAll} years={academicYears} /></TabsContent>
-        <TabsContent value="students"><StudentsTab students={students} buses={buses} assignments={studentAssignments} loading={loading} years={academicYears} onChange={refreshAll} /></TabsContent>
-        <TabsContent value="faculty"><FacultyTab faculty={faculty} loading={loading} years={academicYears} onChange={refreshAll} /></TabsContent>
+        <TabsContent value="students"><StudentsTab students={students} buses={buses} assignments={studentAssignments} loading={loading} years={academicYears} /></TabsContent>
+        <TabsContent value="faculty"><FacultyTab faculty={faculty} loading={loading} years={academicYears} /></TabsContent>
         <TabsContent value="years"><AcademicYearsTab /></TabsContent>
         <TabsContent value="promote"><PromoteStudentsTab /></TabsContent>
         <TabsContent value="import"><ImportStudentsTab /></TabsContent>
@@ -626,9 +625,8 @@ function DriversTab({ drivers, buses, assignments, loading, onChange, years }: {
         const cur = currentBusOf(d.id);
         return (
           <div className="flex justify-end gap-1">
-            {cur && <Button variant="ghost" size="sm" onClick={() => unassign(cur.assignment.id)}>Unassign</Button>}
             <Button variant="ghost" size="sm" aria-label="View" onClick={() => setViewing(d)}><Eye className="h-4 w-4" /></Button>
-            <UserRowActions person={d} role="driver" onChange={onChange} />
+            {cur && <Button variant="ghost" size="sm" onClick={() => unassign(cur.assignment.id)}>Unassign</Button>}
           </div>
         );
       } },
@@ -636,7 +634,6 @@ function DriversTab({ drivers, buses, assignments, loading, onChange, years }: {
 
   return (
     <Card><CardContent className="space-y-4 pt-6">
-      <div className="flex justify-end"><AddUserButton role="driver" onChange={onChange} /></div>
       <DataTable
         rows={filtered}
         columns={columns}
@@ -671,7 +668,7 @@ function DriversTab({ drivers, buses, assignments, loading, onChange, years }: {
   );
 }
 
-function StudentsTab({ students, buses, assignments, loading, years, onChange }: { students: Person[]; buses: BusRow[]; assignments: { id: string; user_id: string; bus_id: string; boarding_stop: string | null; academic_year_id?: string | null }[]; loading: boolean; years: AcademicYear[]; onChange: () => void }) {
+function StudentsTab({ students, buses, assignments, loading, years }: { students: Person[]; buses: BusRow[]; assignments: { id: string; user_id: string; bus_id: string; boarding_stop: string | null; academic_year_id?: string | null }[]; loading: boolean; years: AcademicYear[] }) {
   const [busFilter, setBusFilter] = useState("all");
   const [deptFilter, setDeptFilter] = useState("all");
   const [yearFilter, setYearFilter] = useState("all");
@@ -722,17 +719,11 @@ function StudentsTab({ students, buses, assignments, loading, years, onChange }:
         return b ? <Badge className="bg-primary text-primary-foreground">Bus {b.bus_number}</Badge> : <StatusBadge status="inactive" />;
       } },
     { key: "actions", header: "", className: "w-16 text-right",
-      accessor: (s) => (
-        <div className="flex justify-end gap-1">
-          <Button variant="ghost" size="sm" aria-label="View" onClick={() => setViewing(s)}><Eye className="h-4 w-4" /></Button>
-          <UserRowActions person={s} role="student" onChange={onChange} />
-        </div>
-      ) },
+      accessor: (s) => <Button variant="ghost" size="sm" aria-label="View" onClick={() => setViewing(s)}><Eye className="h-4 w-4" /></Button> },
   ];
 
   return (
     <Card><CardContent className="space-y-4 pt-6">
-      <div className="flex justify-end"><AddUserButton role="student" onChange={onChange} /></div>
       <DataTable
         rows={filtered}
         columns={columns}
@@ -808,7 +799,7 @@ function StudentsTab({ students, buses, assignments, loading, years, onChange }:
   );
 }
 
-function FacultyTab({ faculty, loading, years, onChange }: { faculty: Person[]; loading: boolean; years: AcademicYear[]; onChange: () => void }) {
+function FacultyTab({ faculty, loading, years }: { faculty: Person[]; loading: boolean; years: AcademicYear[] }) {
   const [deptFilter, setDeptFilter] = useState("all");
   const [yearFilter, setYearFilter] = useState("all");
   const [branchFilter, setBranchFilter] = useState("all");
@@ -831,17 +822,11 @@ function FacultyTab({ faculty, loading, years, onChange }: { faculty: Person[]; 
     { key: "email", header: "Email", sortValue: (f) => f.email ?? "", csv: (f) => f.email ?? "", accessor: (f) => <span className="text-muted-foreground">{f.email ?? "—"}</span> },
     { key: "phone", header: "Phone", sortValue: (f) => f.phone ?? "", csv: (f) => f.phone ?? "", accessor: (f) => <span className="tabular-nums">{f.phone ?? "—"}</span> },
     { key: "actions", header: "", className: "w-16 text-right",
-      accessor: (f) => (
-        <div className="flex justify-end gap-1">
-          <Button variant="ghost" size="sm" aria-label="View" onClick={() => setViewing(f)}><Eye className="h-4 w-4" /></Button>
-          <UserRowActions person={f} role="faculty" onChange={onChange} />
-        </div>
-      ) },
+      accessor: (f) => <Button variant="ghost" size="sm" aria-label="View" onClick={() => setViewing(f)}><Eye className="h-4 w-4" /></Button> },
   ];
 
   return (
     <Card><CardContent className="space-y-4 pt-6">
-      <div className="flex justify-end"><AddUserButton role="faculty" onChange={onChange} /></div>
       <DataTable
         rows={filtered}
         columns={columns}
