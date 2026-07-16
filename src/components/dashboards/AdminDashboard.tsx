@@ -553,11 +553,12 @@ function RoutesTab({ routes, loading, onChange }: { routes: RouteRow[]; loading:
   );
 }
 
-function DriversTab({ drivers, buses, routes, assignments, loading, onChange, years }: { drivers: Person[]; buses: BusRow[]; routes: RouteRow[]; assignments: { id: string; driver_id: string; bus_id: string; active: boolean; academic_year_id?: string | null }[]; loading: boolean; onChange: () => void; years: AcademicYear[] }) {
+function DriversTab({ drivers, buses, routes, assignments, loading, onChange, years, activeYear, onGoToYears }: { drivers: Person[]; buses: BusRow[]; routes: RouteRow[]; assignments: { id: string; driver_id: string; bus_id: string; active: boolean; academic_year_id?: string | null }[]; loading: boolean; onChange: () => void; years: AcademicYear[]; activeYear: AcademicYear | null; onGoToYears: () => void }) {
   const [busFilter, setBusFilter] = useState("all");
   const [yearFilter, setYearFilter] = useState("all");
   const [viewing, setViewing] = useState<Person | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+  const [warnOpen, setWarnOpen] = useState(false);
   const deleteUser = useServerFn(deleteUserAccount);
 
   async function removeDriver(id: string, name: string) {
@@ -572,6 +573,10 @@ function DriversTab({ drivers, buses, routes, assignments, loading, onChange, ye
   }
 
   async function assign(driverId: string, busId: string) {
+    if (!activeYear) {
+      setWarnOpen(true);
+      return;
+    }
     const prev = assignments.find((x) => x.driver_id === driverId && x.active);
     const { data: yr } = await supabase.from("academic_years").select("id").eq("status", "active").maybeSingle();
     if (!yr?.id) return toast.error("Please create or activate an Academic Year before assigning drivers.");
@@ -691,6 +696,13 @@ function DriversTab({ drivers, buses, routes, assignments, loading, onChange, ye
         buses={buses}
         routes={routes}
         onCreated={onChange}
+        activeYear={activeYear}
+        onNeedActiveYear={() => setWarnOpen(true)}
+      />
+      <NoActiveYearDialog
+        open={warnOpen}
+        onClose={() => setWarnOpen(false)}
+        onGoToYears={() => { setWarnOpen(false); onGoToYears(); }}
       />
     </CardContent></Card>
   );
