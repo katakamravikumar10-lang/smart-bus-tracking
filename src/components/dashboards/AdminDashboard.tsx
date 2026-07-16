@@ -295,8 +295,8 @@ export function AdminDashboard({ user }: { user: User }) {
         <TabsContent value="buses"><BusesTab buses={buses} routes={routes} loading={loading} onChange={refreshAll} /></TabsContent>
         <TabsContent value="routes"><RoutesTab routes={routes} loading={loading} onChange={refreshAll} /></TabsContent>
         <TabsContent value="drivers"><DriversTab drivers={drivers} buses={buses} routes={routes} assignments={driverAssignments} loading={loading} onChange={refreshAll} years={academicYears} /></TabsContent>
-        <TabsContent value="students"><StudentsTab students={students} buses={buses} assignments={studentAssignments} loading={loading} years={academicYears} /></TabsContent>
-        <TabsContent value="faculty"><FacultyTab faculty={faculty} loading={loading} years={academicYears} /></TabsContent>
+        <TabsContent value="students"><StudentsTab students={students} buses={buses} assignments={studentAssignments} loading={loading} years={academicYears} onChange={refreshAll} /></TabsContent>
+        <TabsContent value="faculty"><FacultyTab faculty={faculty} loading={loading} years={academicYears} onChange={refreshAll} /></TabsContent>
         <TabsContent value="years"><AcademicYearsTab /></TabsContent>
         <TabsContent value="promote"><PromoteStudentsTab /></TabsContent>
         <TabsContent value="import"><ImportStudentsTab /></TabsContent>
