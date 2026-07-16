@@ -41,16 +41,17 @@ function loadGoogleMaps(): Promise<void> {
   if (window.google?.maps?.Map) return Promise.resolve();
   if (mapsPromise) return mapsPromise;
   mapsPromise = new Promise<void>((resolve, reject) => {
-    // Accept both the Lovable-managed connector variable and a plain VITE_
-    // customer-owned key for Vercel/self-hosted deployments. Only VITE_-prefixed
-    // vars are exposed to the client bundle by Vite — a bare GOOGLE_MAPS_BROWSER_KEY
-    // in Vercel env will NOT reach the browser.
-    const key =
-      import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY ||
-      import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY;
+    // Prefer the customer-owned VITE_GOOGLE_MAPS_BROWSER_KEY (set in Vercel /
+    // self-hosted env). Fall back to the Lovable-managed connector variable
+    // (only present in the Lovable sandbox). Only VITE_-prefixed vars are
+    // exposed to the client bundle by Vite — a bare GOOGLE_MAPS_BROWSER_KEY
+    // will NOT reach the browser.
+    const customerKey = import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY;
+    const connectorKey = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
+    const key = customerKey || connectorKey;
     const channel =
-      import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID ||
-      import.meta.env.VITE_GOOGLE_MAPS_TRACKING_ID;
+      import.meta.env.VITE_GOOGLE_MAPS_TRACKING_ID ||
+      import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID;
     if (!key) {
       console.error(
         "[BusMap] Google Maps key missing. Set VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY " +
@@ -61,9 +62,9 @@ function loadGoogleMaps(): Promise<void> {
     // Diagnostic: confirm key presence at runtime without exposing its value.
     // Log a non-reversible SHA-256 fingerprint of the key so we can compare it
     // to the key configured in Google Cloud without ever printing the key.
-    const source = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY
-      ? "VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY"
-      : "VITE_GOOGLE_MAPS_BROWSER_KEY";
+    const source = customerKey
+      ? "VITE_GOOGLE_MAPS_BROWSER_KEY"
+      : "VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY";
     console.info(
       `[BusMap] Google Maps key: present (len=${key.length}), source=${source}, channel=${channel ? "present" : "missing"}`,
     );
