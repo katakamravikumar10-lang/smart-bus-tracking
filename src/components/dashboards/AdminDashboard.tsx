@@ -829,7 +829,7 @@ function AddDriverDialog({
   );
 }
 
-function StudentsTab({ students, buses, assignments, loading, years }: { students: Person[]; buses: BusRow[]; assignments: { id: string; user_id: string; bus_id: string; boarding_stop: string | null; academic_year_id?: string | null }[]; loading: boolean; years: AcademicYear[] }) {
+function StudentsTab({ students, buses, assignments, loading, years, onChange }: { students: Person[]; buses: BusRow[]; assignments: { id: string; user_id: string; bus_id: string; boarding_stop: string | null; academic_year_id?: string | null }[]; loading: boolean; years: AcademicYear[]; onChange: () => void }) {
   const [busFilter, setBusFilter] = useState("all");
   const [deptFilter, setDeptFilter] = useState("all");
   const [yearFilter, setYearFilter] = useState("all");
