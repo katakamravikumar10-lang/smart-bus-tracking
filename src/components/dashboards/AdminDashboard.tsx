@@ -714,12 +714,16 @@ function AddDriverDialog({
   buses,
   routes,
   onCreated,
+  activeYear,
+  onNeedActiveYear,
 }: {
   open: boolean;
   onClose: () => void;
   buses: BusRow[];
   routes: RouteRow[];
   onCreated: () => void;
+  activeYear: AcademicYear | null;
+  onNeedActiveYear: () => void;
 }) {
   const createDriver = useServerFn(createDriverAccount);
   const [form, setForm] = useState({
@@ -754,6 +758,10 @@ function AddDriverDialog({
     e.preventDefault();
     console.log("[AddDriver] Form submit started", { form });
     if (form.password.length < 8) return toast.error("Password must be at least 8 characters.");
+    if (form.bus_id && !activeYear) {
+      onNeedActiveYear();
+      return;
+    }
     console.log("[AddDriver] Validation passed");
     setSaving(true);
     try {
