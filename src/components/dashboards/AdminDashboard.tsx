@@ -293,8 +293,8 @@ export function AdminDashboard({ user }: { user: User }) {
         <TabsContent value="buses"><BusesTab buses={buses} routes={routes} loading={loading} onChange={refreshAll} /></TabsContent>
         <TabsContent value="routes"><RoutesTab routes={routes} loading={loading} onChange={refreshAll} /></TabsContent>
         <TabsContent value="drivers"><DriversTab drivers={drivers} buses={buses} assignments={driverAssignments} loading={loading} onChange={refreshAll} years={academicYears} /></TabsContent>
-        <TabsContent value="students"><StudentsTab students={students} buses={buses} assignments={studentAssignments} loading={loading} years={academicYears} /></TabsContent>
-        <TabsContent value="faculty"><FacultyTab faculty={faculty} loading={loading} years={academicYears} /></TabsContent>
+        <TabsContent value="students"><StudentsTab students={students} buses={buses} assignments={studentAssignments} loading={loading} years={academicYears} onChange={refreshAll} /></TabsContent>
+        <TabsContent value="faculty"><FacultyTab faculty={faculty} loading={loading} years={academicYears} onChange={refreshAll} /></TabsContent>
         <TabsContent value="years"><AcademicYearsTab /></TabsContent>
         <TabsContent value="promote"><PromoteStudentsTab /></TabsContent>
         <TabsContent value="import"><ImportStudentsTab /></TabsContent>
@@ -671,7 +671,7 @@ function DriversTab({ drivers, buses, assignments, loading, onChange, years }: {
   );
 }
 
-function StudentsTab({ students, buses, assignments, loading, years }: { students: Person[]; buses: BusRow[]; assignments: { id: string; user_id: string; bus_id: string; boarding_stop: string | null; academic_year_id?: string | null }[]; loading: boolean; years: AcademicYear[] }) {
+function StudentsTab({ students, buses, assignments, loading, years, onChange }: { students: Person[]; buses: BusRow[]; assignments: { id: string; user_id: string; bus_id: string; boarding_stop: string | null; academic_year_id?: string | null }[]; loading: boolean; years: AcademicYear[]; onChange: () => void }) {
   const [busFilter, setBusFilter] = useState("all");
   const [deptFilter, setDeptFilter] = useState("all");
   const [yearFilter, setYearFilter] = useState("all");
@@ -808,7 +808,7 @@ function StudentsTab({ students, buses, assignments, loading, years }: { student
   );
 }
 
-function FacultyTab({ faculty, loading, years }: { faculty: Person[]; loading: boolean; years: AcademicYear[] }) {
+function FacultyTab({ faculty, loading, years, onChange }: { faculty: Person[]; loading: boolean; years: AcademicYear[]; onChange: () => void }) {
   const [deptFilter, setDeptFilter] = useState("all");
   const [yearFilter, setYearFilter] = useState("all");
   const [branchFilter, setBranchFilter] = useState("all");
