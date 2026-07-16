@@ -43,6 +43,7 @@ import { StatCard } from "@/components/StatCard";
 import { FleetCharts } from "@/components/FleetCharts";
 import { DataTable, type Column } from "@/components/DataTable";
 import { StatusBadge } from "@/components/StatusBadge";
+import { AddUserButton, UserRowActions } from "@/components/dashboards/UserManagement";
 import {
   Dialog,
   DialogContent,
