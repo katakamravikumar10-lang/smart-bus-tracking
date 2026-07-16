@@ -43,6 +43,8 @@ import { StatCard } from "@/components/StatCard";
 import { FleetCharts } from "@/components/FleetCharts";
 import { DataTable, type Column } from "@/components/DataTable";
 import { StatusBadge } from "@/components/StatusBadge";
+import { useServerFn } from "@tanstack/react-start";
+import { createDriverAccount } from "@/lib/drivers.functions";
 import {
   Dialog,
   DialogContent,
@@ -291,7 +293,7 @@ export function AdminDashboard({ user }: { user: User }) {
 
         <TabsContent value="buses"><BusesTab buses={buses} routes={routes} loading={loading} onChange={refreshAll} /></TabsContent>
         <TabsContent value="routes"><RoutesTab routes={routes} loading={loading} onChange={refreshAll} /></TabsContent>
-        <TabsContent value="drivers"><DriversTab drivers={drivers} buses={buses} assignments={driverAssignments} loading={loading} onChange={refreshAll} years={academicYears} /></TabsContent>
+        <TabsContent value="drivers"><DriversTab drivers={drivers} buses={buses} routes={routes} assignments={driverAssignments} loading={loading} onChange={refreshAll} years={academicYears} /></TabsContent>
         <TabsContent value="students"><StudentsTab students={students} buses={buses} assignments={studentAssignments} loading={loading} years={academicYears} /></TabsContent>
         <TabsContent value="faculty"><FacultyTab faculty={faculty} loading={loading} years={academicYears} /></TabsContent>
         <TabsContent value="years"><AcademicYearsTab /></TabsContent>
@@ -550,10 +552,11 @@ function RoutesTab({ routes, loading, onChange }: { routes: RouteRow[]; loading:
   );
 }
 
-function DriversTab({ drivers, buses, assignments, loading, onChange, years }: { drivers: Person[]; buses: BusRow[]; assignments: { id: string; driver_id: string; bus_id: string; active: boolean; academic_year_id?: string | null }[]; loading: boolean; onChange: () => void; years: AcademicYear[] }) {
+function DriversTab({ drivers, buses, routes, assignments, loading, onChange, years }: { drivers: Person[]; buses: BusRow[]; routes: RouteRow[]; assignments: { id: string; driver_id: string; bus_id: string; active: boolean; academic_year_id?: string | null }[]; loading: boolean; onChange: () => void; years: AcademicYear[] }) {
   const [busFilter, setBusFilter] = useState("all");
   const [yearFilter, setYearFilter] = useState("all");
   const [viewing, setViewing] = useState<Person | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
 
   async function assign(driverId: string, busId: string) {
     const prev = assignments.find((x) => x.driver_id === driverId && x.active);
@@ -634,6 +637,9 @@ function DriversTab({ drivers, buses, assignments, loading, onChange, years }: {
 
   return (
     <Card><CardContent className="space-y-4 pt-6">
+      <div className="flex justify-end">
+        <Button size="sm" onClick={() => setAddOpen(true)}>+ Add Driver</Button>
+      </div>
       <DataTable
         rows={filtered}
         columns={columns}
@@ -664,7 +670,148 @@ function DriversTab({ drivers, buses, assignments, loading, onChange, years }: {
         }
       />
       <PersonDialog person={viewing} onClose={() => setViewing(null)} role="Driver" />
+      <AddDriverDialog
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        buses={buses}
+        routes={routes}
+        onCreated={onChange}
+      />
     </CardContent></Card>
+  );
+}
+
+function AddDriverDialog({
+  open,
+  onClose,
+  buses,
+  routes,
+  onCreated,
+}: {
+  open: boolean;
+  onClose: () => void;
+  buses: BusRow[];
+  routes: RouteRow[];
+  onCreated: () => void;
+}) {
+  const createDriver = useServerFn(createDriverAccount);
+  const [form, setForm] = useState({
+    full_name: "",
+    email: "",
+    phone: "",
+    employee_id: "",
+    password: "",
+    bus_id: "",
+    route_id: "",
+  });
+  const [saving, setSaving] = useState(false);
+
+  function reset() {
+    setForm({ full_name: "", email: "", phone: "", employee_id: "", password: "", bus_id: "", route_id: "" });
+  }
+
+  function generatePassword() {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%";
+    let out = "";
+    const arr = new Uint32Array(14);
+    crypto.getRandomValues(arr);
+    for (const n of arr) out += chars[n % chars.length];
+    setForm((f) => ({ ...f, password: out }));
+  }
+
+  const filteredBuses = form.route_id
+    ? buses.filter((b) => b.route_id === form.route_id)
+    : buses;
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (form.password.length < 8) return toast.error("Password must be at least 8 characters.");
+    setSaving(true);
+    try {
+      await createDriver({
+        data: {
+          full_name: form.full_name.trim(),
+          email: form.email.trim(),
+          phone: form.phone.trim() || null,
+          employee_id: form.employee_id.trim() || null,
+          password: form.password,
+          bus_id: form.bus_id || null,
+          route_id: form.route_id || null,
+        },
+      });
+      toast.success("Driver created");
+      reset();
+      onCreated();
+      onClose();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to create driver");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) { onClose(); } }}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Add driver</DialogTitle>
+          <DialogDescription>Create a driver account and optionally assign a bus.</DialogDescription>
+        </DialogHeader>
+        <form onSubmit={submit} className="space-y-3">
+          <div className="space-y-1.5">
+            <Label>Driver name</Label>
+            <Input required value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Email</Label>
+            <Input type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1.5">
+              <Label>Phone</Label>
+              <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Employee ID</Label>
+              <Input value={form.employee_id} onChange={(e) => setForm({ ...form, employee_id: e.target.value })} placeholder="Optional" />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Password</Label>
+            <div className="flex gap-2">
+              <Input type="text" required minLength={8} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Min 8 characters" />
+              <Button type="button" variant="outline" size="sm" onClick={generatePassword}>Generate</Button>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1.5">
+              <Label>Assign route</Label>
+              <Select value={form.route_id || "none"} onValueChange={(v) => setForm({ ...form, route_id: v === "none" ? "" : v, bus_id: "" })}>
+                <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  {routes.map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Assign bus</Label>
+              <Select value={form.bus_id || "none"} onValueChange={(v) => setForm({ ...form, bus_id: v === "none" ? "" : v })}>
+                <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  {filteredBuses.map((b) => <SelectItem key={b.id} value={b.id}>Bus {b.bus_number}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="ghost" onClick={onClose} disabled={saving}>Cancel</Button>
+            <Button type="submit" disabled={saving}>{saving ? "Creating…" : "Create Driver"}</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
