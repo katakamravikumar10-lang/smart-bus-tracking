@@ -45,6 +45,7 @@ import { DataTable, type Column } from "@/components/DataTable";
 import { StatusBadge } from "@/components/StatusBadge";
 import { useServerFn } from "@tanstack/react-start";
 import { createDriverAccount } from "@/lib/drivers.functions";
+import { deleteUserAccount } from "@/lib/users.functions";
 import {
   Dialog,
   DialogContent,
