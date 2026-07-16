@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 export type Language = "en" | "te";
+export type MapProvider = "google" | "osm";
 
 export type AppSettings = {
   notifyBusArrival: boolean;
@@ -11,10 +12,16 @@ export type AppSettings = {
   language: Language;
   gpsUpdateSeconds: number;
   demoModeEnabled: boolean;
+  mapProvider: MapProvider;
 };
 
 const STORAGE_KEY = "nbt-app-settings";
 const CHANGE_EVENT = "nbt-app-settings-change";
+
+function envDefaultMapProvider(): MapProvider {
+  const v = (import.meta.env.VITE_MAP_PROVIDER as string | undefined)?.toLowerCase();
+  return v === "osm" ? "osm" : v === "google" ? "google" : "google";
+}
 
 export const defaultSettings: AppSettings = {
   notifyBusArrival: true,
@@ -25,6 +32,7 @@ export const defaultSettings: AppSettings = {
   language: "en",
   gpsUpdateSeconds: 10,
   demoModeEnabled: false,
+  mapProvider: envDefaultMapProvider(),
 };
 
 function readStored(): AppSettings {
