@@ -45,6 +45,7 @@ import { DataTable, type Column } from "@/components/DataTable";
 import { StatusBadge } from "@/components/StatusBadge";
 import { useServerFn } from "@tanstack/react-start";
 import { createDriverAccount } from "@/lib/drivers.functions";
+import { deleteUserAccount } from "@/lib/users.functions";
 import {
   Dialog,
   DialogContent,
@@ -294,8 +295,8 @@ export function AdminDashboard({ user }: { user: User }) {
         <TabsContent value="buses"><BusesTab buses={buses} routes={routes} loading={loading} onChange={refreshAll} /></TabsContent>
         <TabsContent value="routes"><RoutesTab routes={routes} loading={loading} onChange={refreshAll} /></TabsContent>
         <TabsContent value="drivers"><DriversTab drivers={drivers} buses={buses} routes={routes} assignments={driverAssignments} loading={loading} onChange={refreshAll} years={academicYears} /></TabsContent>
-        <TabsContent value="students"><StudentsTab students={students} buses={buses} assignments={studentAssignments} loading={loading} years={academicYears} /></TabsContent>
-        <TabsContent value="faculty"><FacultyTab faculty={faculty} loading={loading} years={academicYears} /></TabsContent>
+        <TabsContent value="students"><StudentsTab students={students} buses={buses} assignments={studentAssignments} loading={loading} years={academicYears} onChange={refreshAll} /></TabsContent>
+        <TabsContent value="faculty"><FacultyTab faculty={faculty} loading={loading} years={academicYears} onChange={refreshAll} /></TabsContent>
         <TabsContent value="years"><AcademicYearsTab /></TabsContent>
         <TabsContent value="promote"><PromoteStudentsTab /></TabsContent>
         <TabsContent value="import"><ImportStudentsTab /></TabsContent>
@@ -557,6 +558,18 @@ function DriversTab({ drivers, buses, routes, assignments, loading, onChange, ye
   const [yearFilter, setYearFilter] = useState("all");
   const [viewing, setViewing] = useState<Person | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+  const deleteUser = useServerFn(deleteUserAccount);
+
+  async function removeDriver(id: string, name: string) {
+    if (!confirm(`Are you sure you want to delete this user? This action cannot be undone.\n\n${name}`)) return;
+    try {
+      await deleteUser({ data: { user_id: id } });
+      toast.success("User deleted successfully.");
+      onChange();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete user.");
+    }
+  }
 
   async function assign(driverId: string, busId: string) {
     const prev = assignments.find((x) => x.driver_id === driverId && x.active);
@@ -630,6 +643,7 @@ function DriversTab({ drivers, buses, routes, assignments, loading, onChange, ye
           <div className="flex justify-end gap-1">
             <Button variant="ghost" size="sm" aria-label="View" onClick={() => setViewing(d)}><Eye className="h-4 w-4" /></Button>
             {cur && <Button variant="ghost" size="sm" onClick={() => unassign(cur.assignment.id)}>Unassign</Button>}
+            <Button variant="ghost" size="sm" aria-label="Delete driver" onClick={() => removeDriver(d.id, d.full_name ?? d.email ?? "this driver")}><Trash2 className="h-4 w-4" /></Button>
           </div>
         );
       } },
@@ -815,7 +829,7 @@ function AddDriverDialog({
   );
 }
 
-function StudentsTab({ students, buses, assignments, loading, years }: { students: Person[]; buses: BusRow[]; assignments: { id: string; user_id: string; bus_id: string; boarding_stop: string | null; academic_year_id?: string | null }[]; loading: boolean; years: AcademicYear[] }) {
+function StudentsTab({ students, buses, assignments, loading, years, onChange }: { students: Person[]; buses: BusRow[]; assignments: { id: string; user_id: string; bus_id: string; boarding_stop: string | null; academic_year_id?: string | null }[]; loading: boolean; years: AcademicYear[]; onChange: () => void }) {
   const [busFilter, setBusFilter] = useState("all");
   const [deptFilter, setDeptFilter] = useState("all");
   const [yearFilter, setYearFilter] = useState("all");
@@ -826,6 +840,18 @@ function StudentsTab({ students, buses, assignments, loading, years }: { student
   const [viewing, setViewing] = useState<Person | null>(null);
 
   const departments = Array.from(new Set(students.map((s) => s.department).filter(Boolean))) as string[];
+  const deleteUser = useServerFn(deleteUserAccount);
+
+  async function removeStudent(id: string, name: string) {
+    if (!confirm(`Are you sure you want to delete this user? This action cannot be undone.\n\n${name}`)) return;
+    try {
+      await deleteUser({ data: { user_id: id } });
+      toast.success("User deleted successfully.");
+      onChange();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete user.");
+    }
+  }
   const branches = Array.from(new Set(students.map((s) => s.branch).filter(Boolean))) as string[];
   const sections = Array.from(new Set(students.map((s) => s.section).filter(Boolean))) as string[];
   const yosList = Array.from(new Set(students.map((s) => s.year_of_study).filter((v): v is number => v != null))).sort();
@@ -865,8 +891,13 @@ function StudentsTab({ students, buses, assignments, loading, years }: { student
         const b = busOf(s.id);
         return b ? <Badge className="bg-primary text-primary-foreground">Bus {b.bus_number}</Badge> : <StatusBadge status="inactive" />;
       } },
-    { key: "actions", header: "", className: "w-16 text-right",
-      accessor: (s) => <Button variant="ghost" size="sm" aria-label="View" onClick={() => setViewing(s)}><Eye className="h-4 w-4" /></Button> },
+    { key: "actions", header: "", className: "w-24 text-right",
+      accessor: (s) => (
+        <div className="flex justify-end gap-1">
+          <Button variant="ghost" size="sm" aria-label="View" onClick={() => setViewing(s)}><Eye className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="sm" aria-label="Delete student" onClick={() => removeStudent(s.id, s.full_name ?? s.email ?? "this student")}><Trash2 className="h-4 w-4" /></Button>
+        </div>
+      ) },
   ];
 
   return (
@@ -946,12 +977,24 @@ function StudentsTab({ students, buses, assignments, loading, years }: { student
   );
 }
 
-function FacultyTab({ faculty, loading, years }: { faculty: Person[]; loading: boolean; years: AcademicYear[] }) {
+function FacultyTab({ faculty, loading, years, onChange }: { faculty: Person[]; loading: boolean; years: AcademicYear[]; onChange: () => void }) {
   const [deptFilter, setDeptFilter] = useState("all");
   const [yearFilter, setYearFilter] = useState("all");
   const [branchFilter, setBranchFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [viewing, setViewing] = useState<Person | null>(null);
+  const deleteUser = useServerFn(deleteUserAccount);
+
+  async function removeFaculty(id: string, name: string) {
+    if (!confirm(`Are you sure you want to delete this user? This action cannot be undone.\n\n${name}`)) return;
+    try {
+      await deleteUser({ data: { user_id: id } });
+      toast.success("User deleted successfully.");
+      onChange();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete user.");
+    }
+  }
   const departments = Array.from(new Set(faculty.map((s) => s.department).filter(Boolean))) as string[];
   const branches = Array.from(new Set(faculty.map((s) => s.branch).filter(Boolean))) as string[];
   const filtered = faculty.filter((f) => {
@@ -968,8 +1011,13 @@ function FacultyTab({ faculty, loading, years }: { faculty: Person[]; loading: b
     { key: "dept", header: "Department", sortValue: (f) => f.department ?? "", csv: (f) => f.department ?? "", accessor: (f) => <span className="text-muted-foreground">{f.department ?? "—"}</span> },
     { key: "email", header: "Email", sortValue: (f) => f.email ?? "", csv: (f) => f.email ?? "", accessor: (f) => <span className="text-muted-foreground">{f.email ?? "—"}</span> },
     { key: "phone", header: "Phone", sortValue: (f) => f.phone ?? "", csv: (f) => f.phone ?? "", accessor: (f) => <span className="tabular-nums">{f.phone ?? "—"}</span> },
-    { key: "actions", header: "", className: "w-16 text-right",
-      accessor: (f) => <Button variant="ghost" size="sm" aria-label="View" onClick={() => setViewing(f)}><Eye className="h-4 w-4" /></Button> },
+    { key: "actions", header: "", className: "w-24 text-right",
+      accessor: (f) => (
+        <div className="flex justify-end gap-1">
+          <Button variant="ghost" size="sm" aria-label="View" onClick={() => setViewing(f)}><Eye className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="sm" aria-label="Delete faculty" onClick={() => removeFaculty(f.id, f.full_name ?? f.email ?? "this faculty member")}><Trash2 className="h-4 w-4" /></Button>
+        </div>
+      ) },
   ];
 
   return (
