@@ -708,11 +708,6 @@ function DriversTab({ drivers, buses, routes, assignments, loading, onChange, ye
   );
 }
 
-function AddDriverDialog({
-
-  return null;
-}
-
 function NoActiveYearDialog({ open, onClose, onGoToYears }: { open: boolean; onClose: () => void; onGoToYears: () => void }) {
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
@@ -736,7 +731,7 @@ Go to Admin → Academic Years to continue.`}
   );
 }
 
-function _AddDriverDialog_unused({
+function AddDriverDialog({
   open,
   onClose,
   buses,
