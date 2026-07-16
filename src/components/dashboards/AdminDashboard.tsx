@@ -739,9 +739,12 @@ function AddDriverDialog({
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    console.log("[AddDriver] Form submit started", { form });
     if (form.password.length < 8) return toast.error("Password must be at least 8 characters.");
+    console.log("[AddDriver] Validation passed");
     setSaving(true);
     try {
+      console.log("[AddDriver] Calling createDriverAccount()");
       await createDriver({
         data: {
           full_name: form.full_name.trim(),
@@ -753,11 +756,13 @@ function AddDriverDialog({
           route_id: form.route_id || null,
         },
       });
+      console.log("[AddDriver] Server response received: success");
       toast.success("Driver created");
       reset();
       onCreated();
       onClose();
     } catch (err) {
+      console.error("[AddDriver] Error", err);
       toast.error(err instanceof Error ? err.message : "Failed to create driver");
     } finally {
       setSaving(false);
