@@ -4,13 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 const collegeLogo = { url: "/college-logo.png" };
 const collegeBanner = { url: "/college-banner.jpg" };
 const founderImg = { url: "/founder.webp" };
-import { MailCheck, RefreshCw, ArrowLeft } from "lucide-react";
+import { MailCheck, ArrowLeft } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { checkLoginLockout, recordLoginAttempt } from "@/lib/security.functions";
 
@@ -27,7 +25,6 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const navigate = useNavigate();
   const [checking, setChecking] = useState(true);
-  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -125,22 +122,11 @@ function AuthPage() {
           </div>
 
           <div className="rounded-2xl border border-border bg-card p-6 shadow-xl shadow-primary/5">
-            {pendingEmail ? (
-              <VerifyPending email={pendingEmail} onBack={() => setPendingEmail(null)} />
-            ) : (
-              <Tabs defaultValue="signin">
-                <TabsList className="grid w-full grid-cols-2 mb-4">
-                  <TabsTrigger value="signin">Sign in</TabsTrigger>
-                  <TabsTrigger value="signup">Register</TabsTrigger>
-                </TabsList>
-                <TabsContent value="signin">
-                  <SignInForm onUnverified={setPendingEmail} />
-                </TabsContent>
-                <TabsContent value="signup">
-                  <SignUpForm onPending={setPendingEmail} />
-                </TabsContent>
-              </Tabs>
-            )}
+            <SignInForm />
+            <p className="mt-4 text-center text-xs text-muted-foreground">
+              Accounts are created by the Transport Administration. Contact your
+              administrator if you need access.
+            </p>
           </div>
 
           <p className="mt-4 text-center text-xs text-muted-foreground">
@@ -152,7 +138,7 @@ function AuthPage() {
   );
 }
 
-function SignInForm({ onUnverified }: { onUnverified: (email: string) => void }) {
+function SignInForm() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -189,11 +175,6 @@ function SignInForm({ onUnverified }: { onUnverified: (email: string) => void })
     }).catch(() => {});
 
     if (error) {
-      const code = (error as { code?: string }).code;
-      if (code === "email_not_confirmed" || /confirm/i.test(error.message)) {
-        onUnverified(email);
-        return;
-      }
       toast.error(error.message);
     } else navigate({ to: "/dashboard", replace: true });
   }
