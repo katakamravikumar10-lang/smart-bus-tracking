@@ -977,12 +977,24 @@ function StudentsTab({ students, buses, assignments, loading, years, onChange }:
   );
 }
 
-function FacultyTab({ faculty, loading, years }: { faculty: Person[]; loading: boolean; years: AcademicYear[] }) {
+function FacultyTab({ faculty, loading, years, onChange }: { faculty: Person[]; loading: boolean; years: AcademicYear[]; onChange: () => void }) {
   const [deptFilter, setDeptFilter] = useState("all");
   const [yearFilter, setYearFilter] = useState("all");
   const [branchFilter, setBranchFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [viewing, setViewing] = useState<Person | null>(null);
+  const deleteUser = useServerFn(deleteUserAccount);
+
+  async function removeFaculty(id: string, name: string) {
+    if (!confirm(`Are you sure you want to delete this user? This action cannot be undone.\n\n${name}`)) return;
+    try {
+      await deleteUser({ data: { user_id: id } });
+      toast.success("User deleted successfully.");
+      onChange();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete user.");
+    }
+  }
   const departments = Array.from(new Set(faculty.map((s) => s.department).filter(Boolean))) as string[];
   const branches = Array.from(new Set(faculty.map((s) => s.branch).filter(Boolean))) as string[];
   const filtered = faculty.filter((f) => {
@@ -999,8 +1011,13 @@ function FacultyTab({ faculty, loading, years }: { faculty: Person[]; loading: b
     { key: "dept", header: "Department", sortValue: (f) => f.department ?? "", csv: (f) => f.department ?? "", accessor: (f) => <span className="text-muted-foreground">{f.department ?? "—"}</span> },
     { key: "email", header: "Email", sortValue: (f) => f.email ?? "", csv: (f) => f.email ?? "", accessor: (f) => <span className="text-muted-foreground">{f.email ?? "—"}</span> },
     { key: "phone", header: "Phone", sortValue: (f) => f.phone ?? "", csv: (f) => f.phone ?? "", accessor: (f) => <span className="tabular-nums">{f.phone ?? "—"}</span> },
-    { key: "actions", header: "", className: "w-16 text-right",
-      accessor: (f) => <Button variant="ghost" size="sm" aria-label="View" onClick={() => setViewing(f)}><Eye className="h-4 w-4" /></Button> },
+    { key: "actions", header: "", className: "w-24 text-right",
+      accessor: (f) => (
+        <div className="flex justify-end gap-1">
+          <Button variant="ghost" size="sm" aria-label="View" onClick={() => setViewing(f)}><Eye className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="sm" aria-label="Delete faculty" onClick={() => removeFaculty(f.id, f.full_name ?? f.email ?? "this faculty member")}><Trash2 className="h-4 w-4" /></Button>
+        </div>
+      ) },
   ];
 
   return (
