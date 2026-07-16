@@ -36,7 +36,7 @@ import { Link } from "@tanstack/react-router";
 import { useAppSettings } from "@/lib/app-settings";
 import { toast } from "sonner";
 import { audit } from "@/lib/audit";
-import { Bell, Palette, ShieldAlert, Languages, Gauge, Info, LifeBuoy, FlaskConical } from "lucide-react";
+import { Bell, Palette, ShieldAlert, Languages, Gauge, Info, LifeBuoy, FlaskConical, Map as MapIcon } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({ meta: [{ title: "Settings · Narayana Bus Tracker" }] }),
@@ -199,6 +199,21 @@ function SettingsPage() {
                   <SelectItem value="60">Every 1 minute</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-2"><MapIcon className="h-4 w-4" /> Map provider</Label>
+              <Select
+                value={settings.mapProvider}
+                onValueChange={(v) => update("mapProvider", v as "google" | "osm")}
+                disabled={!hydrated}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="google">Google Maps</SelectItem>
+                  <SelectItem value="osm">OpenStreetMap</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">Choose the map used across the app. OpenStreetMap requires no API key.</p>
             </div>
           </CardContent>
         </Card>
