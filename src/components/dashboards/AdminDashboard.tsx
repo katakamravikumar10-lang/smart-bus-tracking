@@ -840,6 +840,18 @@ function StudentsTab({ students, buses, assignments, loading, years, onChange }:
   const [viewing, setViewing] = useState<Person | null>(null);
 
   const departments = Array.from(new Set(students.map((s) => s.department).filter(Boolean))) as string[];
+  const deleteUser = useServerFn(deleteUserAccount);
+
+  async function removeStudent(id: string, name: string) {
+    if (!confirm(`Are you sure you want to delete this user? This action cannot be undone.\n\n${name}`)) return;
+    try {
+      await deleteUser({ data: { user_id: id } });
+      toast.success("User deleted successfully.");
+      onChange();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete user.");
+    }
+  }
   const branches = Array.from(new Set(students.map((s) => s.branch).filter(Boolean))) as string[];
   const sections = Array.from(new Set(students.map((s) => s.section).filter(Boolean))) as string[];
   const yosList = Array.from(new Set(students.map((s) => s.year_of_study).filter((v): v is number => v != null))).sort();
@@ -879,8 +891,13 @@ function StudentsTab({ students, buses, assignments, loading, years, onChange }:
         const b = busOf(s.id);
         return b ? <Badge className="bg-primary text-primary-foreground">Bus {b.bus_number}</Badge> : <StatusBadge status="inactive" />;
       } },
-    { key: "actions", header: "", className: "w-16 text-right",
-      accessor: (s) => <Button variant="ghost" size="sm" aria-label="View" onClick={() => setViewing(s)}><Eye className="h-4 w-4" /></Button> },
+    { key: "actions", header: "", className: "w-24 text-right",
+      accessor: (s) => (
+        <div className="flex justify-end gap-1">
+          <Button variant="ghost" size="sm" aria-label="View" onClick={() => setViewing(s)}><Eye className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="sm" aria-label="Delete student" onClick={() => removeStudent(s.id, s.full_name ?? s.email ?? "this student")}><Trash2 className="h-4 w-4" /></Button>
+        </div>
+      ) },
   ];
 
   return (
