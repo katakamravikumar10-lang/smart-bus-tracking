@@ -709,6 +709,34 @@ function DriversTab({ drivers, buses, routes, assignments, loading, onChange, ye
 }
 
 function AddDriverDialog({
+
+  return null;
+}
+
+function NoActiveYearDialog({ open, onClose, onGoToYears }: { open: boolean; onClose: () => void; onGoToYears: () => void }) {
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>⚠️ Active Academic Year Required</DialogTitle>
+          <DialogDescription className="whitespace-pre-line pt-2">
+{`No Active Academic Year is currently configured.
+
+Please create and activate an Academic Year before assigning buses to drivers.
+
+Go to Admin → Academic Years to continue.`}
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button onClick={onGoToYears}>Go to Academic Years</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function _AddDriverDialog_unused({
   open,
   onClose,
   buses,
