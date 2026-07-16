@@ -59,7 +59,8 @@ export const deleteUserAccount = createServerFn({ method: "POST" })
 
     // Delete auth user (cascade cleans up remaining FKs).
     const { error: authErr } = await supabaseAdmin.auth.admin.deleteUser(data.user_id);
-    if (authErr) {
+    // Ignore "user not found" — auth row was already deleted (e.g. cascade or retry).
+    if (authErr && !/not.?found/i.test(authErr.message)) {
       throw new Error(`Cannot delete auth account: ${authErr.message}`);
     }
 
