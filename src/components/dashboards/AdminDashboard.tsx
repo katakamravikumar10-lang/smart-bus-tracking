@@ -574,13 +574,14 @@ function DriversTab({ drivers, buses, routes, assignments, loading, onChange, ye
   async function assign(driverId: string, busId: string) {
     const prev = assignments.find((x) => x.driver_id === driverId && x.active);
     const { data: yr } = await supabase.from("academic_years").select("id").eq("status", "active").maybeSingle();
-    if (!yr?.id) return toast.error("No active academic year. Activate one first.");
-    await supabase.from("driver_assignments").update({ active: false }).eq("driver_id", driverId);
+    if (!yr?.id) return toast.error("Please create or activate an Academic Year before assigning drivers.");
+    const { error: deactErr } = await supabase.from("driver_assignments").update({ active: false }).eq("driver_id", driverId);
+    if (deactErr) return toast.error(deactErr.message);
     const { error } = await supabase.from("driver_assignments").upsert({ driver_id: driverId, bus_id: busId, active: true, academic_year_id: yr.id }, { onConflict: "driver_id,bus_id" });
     if (error) return toast.error(error.message);
     audit("driver.assign", { entityType: "driver_assignment", entityId: driverId, before: prev, after: { driver_id: driverId, bus_id: busId, active: true, academic_year_id: yr.id } });
     onChange();
-    toast.success("Assigned");
+    toast.success("Bus assigned successfully.");
   }
   async function unassign(id: string) {
     const before = assignments.find((x) => x.id === id);

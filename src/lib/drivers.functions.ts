@@ -71,7 +71,10 @@ export const createDriverAccount = createServerFn({ method: "POST" })
         .select("id")
         .eq("status", "active")
         .maybeSingle();
-      if (yr?.id) {
+      if (!yr?.id) {
+        throw new Error("Please create or activate an Academic Year before assigning drivers.");
+      }
+      {
         // If a route is also chosen, sync the bus to that route.
         if (data.route_id) {
           await supabaseAdmin
