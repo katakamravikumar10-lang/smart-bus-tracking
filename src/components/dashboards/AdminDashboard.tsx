@@ -558,6 +558,18 @@ function DriversTab({ drivers, buses, routes, assignments, loading, onChange, ye
   const [yearFilter, setYearFilter] = useState("all");
   const [viewing, setViewing] = useState<Person | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+  const deleteUser = useServerFn(deleteUserAccount);
+
+  async function removeDriver(id: string, name: string) {
+    if (!confirm(`Are you sure you want to delete this user? This action cannot be undone.\n\n${name}`)) return;
+    try {
+      await deleteUser({ data: { user_id: id } });
+      toast.success("User deleted successfully.");
+      onChange();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete user.");
+    }
+  }
 
   async function assign(driverId: string, busId: string) {
     const prev = assignments.find((x) => x.driver_id === driverId && x.active);
@@ -631,6 +643,7 @@ function DriversTab({ drivers, buses, routes, assignments, loading, onChange, ye
           <div className="flex justify-end gap-1">
             <Button variant="ghost" size="sm" aria-label="View" onClick={() => setViewing(d)}><Eye className="h-4 w-4" /></Button>
             {cur && <Button variant="ghost" size="sm" onClick={() => unassign(cur.assignment.id)}>Unassign</Button>}
+            <Button variant="ghost" size="sm" aria-label="Delete driver" onClick={() => removeDriver(d.id, d.full_name ?? d.email ?? "this driver")}><Trash2 className="h-4 w-4" /></Button>
           </div>
         );
       } },
