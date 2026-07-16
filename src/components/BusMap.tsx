@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { useAppSettings } from "@/lib/app-settings";
 
 export type Bus = {
   id: string;
@@ -29,39 +30,15 @@ type BusMapProps = {
 declare global {
   interface Window {
     __initBusMap?: () => void;
-    gm_authFailure?: () => void;
   }
 }
 
 const COLLEGE = { lat: 14.1497, lng: 79.8447 };
 
-// Google Maps reports auth/billing/referrer/API-enablement problems by
-// invoking window.gm_authFailure — NOT by rejecting the script load or
-// throwing from importLibrary. Covers: BillingNotEnabledMapError,
-// RefererNotAllowedMapError, InvalidKeyMapError, ApiNotActivatedMapError,
-// ExpiredKeyMapError, etc. We surface it via a CustomEvent so any mounted
-// BusMap can flip to the OpenStreetMap fallback.
-let googleAuthFailed = false;
-const GM_AUTH_FAIL_EVENT = "busmap:gm-auth-failure";
-if (typeof window !== "undefined") {
-  const prior = window.gm_authFailure;
-  window.gm_authFailure = () => {
-    googleAuthFailed = true;
-    console.warn("[BusMap] Google Maps auth failure — falling back to OpenStreetMap");
-    try {
-      prior?.();
-    } catch {
-      /* ignore */
-    }
-    window.dispatchEvent(new CustomEvent(GM_AUTH_FAIL_EVENT));
-  };
-}
-
 let mapsPromise: Promise<void> | null = null;
 function loadGoogleMaps(): Promise<void> {
   if (typeof window === "undefined") return Promise.reject(new Error("no window"));
   console.log("[BusMap] loadGoogleMaps() called");
-  if (googleAuthFailed) return Promise.reject(new Error("Google Maps auth failed"));
   if (window.google?.maps?.Map) return Promise.resolve();
   if (mapsPromise) return mapsPromise;
   mapsPromise = new Promise<void>((resolve, reject) => {
@@ -145,33 +122,36 @@ function loadGoogleMaps(): Promise<void> {
 }
 
 export function BusMap(props: BusMapProps) {
-  const [mode, setMode] = useState<"loading" | "google" | "osm">("loading");
+  const { settings, hydrated } = useAppSettings();
+  const provider = settings.mapProvider;
+  const [googleReady, setGoogleReady] = useState<boolean>(
+    typeof window !== "undefined" && !!window.google?.maps?.Map,
+  );
+  const [googleFailed, setGoogleFailed] = useState(false);
 
   useEffect(() => {
-    console.log("[BusMap] mounted");
+    if (!hydrated) return;
+    if (provider !== "google") return;
     let cancelled = false;
+    setGoogleFailed(false);
     loadGoogleMaps()
       .then(() => {
-        if (cancelled) return;
-        if (googleAuthFailed) setMode("osm");
-        else setMode("google");
+        if (!cancelled) setGoogleReady(true);
       })
-      .catch(() => {
-        if (!cancelled) setMode("osm");
+      .catch((err) => {
+        if (!cancelled) {
+          console.warn("[BusMap] Google Maps failed to load:", err);
+          setGoogleFailed(true);
+        }
       });
-    const onAuthFail = () => {
-      if (!cancelled) setMode("osm");
-    };
-    window.addEventListener(GM_AUTH_FAIL_EVENT, onAuthFail);
     return () => {
       cancelled = true;
-      window.removeEventListener(GM_AUTH_FAIL_EVENT, onAuthFail);
     };
-  }, []);
+  }, [hydrated, provider]);
 
   const className = props.className ?? "h-[420px] w-full rounded-xl border border-border bg-muted";
 
-  if (mode === "loading") {
+  if (!hydrated) {
     return (
       <div className={className}>
         <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
@@ -180,8 +160,28 @@ export function BusMap(props: BusMapProps) {
       </div>
     );
   }
-  if (mode === "google") return <GoogleBusMap {...props} />;
-  return <OsmBusMap {...props} />;
+
+  if (provider === "osm") return <OsmBusMap {...props} />;
+
+  if (googleFailed) {
+    return (
+      <div className={className}>
+        <div className="flex h-full w-full items-center justify-center px-4 text-center text-xs text-muted-foreground">
+          Google Maps could not load. Switch the Map Provider to OpenStreetMap in Settings.
+        </div>
+      </div>
+    );
+  }
+  if (!googleReady) {
+    return (
+      <div className={className}>
+        <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
+          Loading map…
+        </div>
+      </div>
+    );
+  }
+  return <GoogleBusMap {...props} />;
 }
 
 /* ----------------- Google Maps ----------------- */
