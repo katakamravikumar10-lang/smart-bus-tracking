@@ -11,8 +11,12 @@ import { toast } from "sonner";
 import { useAcademicYears, type AcademicYear } from "@/lib/academic-year";
 import { audit } from "@/lib/audit";
 
-export function AcademicYearsTab() {
-  const { years, loading, refresh } = useAcademicYears();
+export function AcademicYearsTab({ onChange }: { onChange?: () => void } = {}) {
+  const { years, loading, refresh: refreshLocal } = useAcademicYears();
+  const refresh = async () => {
+    await refreshLocal();
+    onChange?.();
+  };
   const [name, setName] = useState("");
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
