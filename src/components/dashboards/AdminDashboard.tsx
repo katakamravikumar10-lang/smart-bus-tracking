@@ -93,7 +93,7 @@ export function AdminDashboard({ user }: { user: User }) {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [feedback, setFeedback] = useState<Feedback[]>([]);
   const [loading, setLoading] = useState(true);
-  const { active: activeYear, years: academicYears } = useAcademicYears();
+  const { active: activeYear, years: academicYears, refresh: refreshYears } = useAcademicYears();
   const demoEnabled = isDemoModeAllowed();
   const [tabHistory, setTabHistory] = useState<string[]>(() => {
     if (typeof window === "undefined") return ["buses"];
@@ -297,7 +297,7 @@ export function AdminDashboard({ user }: { user: User }) {
         <TabsContent value="drivers"><DriversTab drivers={drivers} buses={buses} routes={routes} assignments={driverAssignments} loading={loading} onChange={refreshAll} years={academicYears} activeYear={activeYear} onGoToYears={() => goToTab("years")} /></TabsContent>
         <TabsContent value="students"><StudentsTab students={students} buses={buses} assignments={studentAssignments} loading={loading} years={academicYears} onChange={refreshAll} /></TabsContent>
         <TabsContent value="faculty"><FacultyTab faculty={faculty} loading={loading} years={academicYears} onChange={refreshAll} /></TabsContent>
-        <TabsContent value="years"><AcademicYearsTab /></TabsContent>
+        <TabsContent value="years"><AcademicYearsTab onChange={refreshYears} /></TabsContent>
         <TabsContent value="promote"><PromoteStudentsTab /></TabsContent>
         <TabsContent value="import"><ImportStudentsTab /></TabsContent>
         <TabsContent value="announce"><AnnouncementsTab routes={routes} activeYear={activeYear} years={academicYears} /></TabsContent>
