@@ -294,7 +294,7 @@ export function AdminDashboard({ user }: { user: User }) {
 
         <TabsContent value="buses"><BusesTab buses={buses} routes={routes} loading={loading} onChange={refreshAll} /></TabsContent>
         <TabsContent value="routes"><RoutesTab routes={routes} loading={loading} onChange={refreshAll} /></TabsContent>
-        <TabsContent value="drivers"><DriversTab drivers={drivers} buses={buses} routes={routes} assignments={driverAssignments} loading={loading} onChange={refreshAll} years={academicYears} /></TabsContent>
+        <TabsContent value="drivers"><DriversTab drivers={drivers} buses={buses} routes={routes} assignments={driverAssignments} loading={loading} onChange={refreshAll} years={academicYears} activeYear={activeYear} onGoToYears={() => goToTab("years")} /></TabsContent>
         <TabsContent value="students"><StudentsTab students={students} buses={buses} assignments={studentAssignments} loading={loading} years={academicYears} onChange={refreshAll} /></TabsContent>
         <TabsContent value="faculty"><FacultyTab faculty={faculty} loading={loading} years={academicYears} onChange={refreshAll} /></TabsContent>
         <TabsContent value="years"><AcademicYearsTab /></TabsContent>
@@ -553,11 +553,12 @@ function RoutesTab({ routes, loading, onChange }: { routes: RouteRow[]; loading:
   );
 }
 
-function DriversTab({ drivers, buses, routes, assignments, loading, onChange, years }: { drivers: Person[]; buses: BusRow[]; routes: RouteRow[]; assignments: { id: string; driver_id: string; bus_id: string; active: boolean; academic_year_id?: string | null }[]; loading: boolean; onChange: () => void; years: AcademicYear[] }) {
+function DriversTab({ drivers, buses, routes, assignments, loading, onChange, years, activeYear, onGoToYears }: { drivers: Person[]; buses: BusRow[]; routes: RouteRow[]; assignments: { id: string; driver_id: string; bus_id: string; active: boolean; academic_year_id?: string | null }[]; loading: boolean; onChange: () => void; years: AcademicYear[]; activeYear: AcademicYear | null; onGoToYears: () => void }) {
   const [busFilter, setBusFilter] = useState("all");
   const [yearFilter, setYearFilter] = useState("all");
   const [viewing, setViewing] = useState<Person | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+  const [warnOpen, setWarnOpen] = useState(false);
   const deleteUser = useServerFn(deleteUserAccount);
 
   async function removeDriver(id: string, name: string) {
@@ -572,6 +573,10 @@ function DriversTab({ drivers, buses, routes, assignments, loading, onChange, ye
   }
 
   async function assign(driverId: string, busId: string) {
+    if (!activeYear) {
+      setWarnOpen(true);
+      return;
+    }
     const prev = assignments.find((x) => x.driver_id === driverId && x.active);
     const { data: yr } = await supabase.from("academic_years").select("id").eq("status", "active").maybeSingle();
     if (!yr?.id) return toast.error("Please create or activate an Academic Year before assigning drivers.");
@@ -691,8 +696,38 @@ function DriversTab({ drivers, buses, routes, assignments, loading, onChange, ye
         buses={buses}
         routes={routes}
         onCreated={onChange}
+        activeYear={activeYear}
+        onNeedActiveYear={() => setWarnOpen(true)}
+      />
+      <NoActiveYearDialog
+        open={warnOpen}
+        onClose={() => setWarnOpen(false)}
+        onGoToYears={() => { setWarnOpen(false); onGoToYears(); }}
       />
     </CardContent></Card>
+  );
+}
+
+function NoActiveYearDialog({ open, onClose, onGoToYears }: { open: boolean; onClose: () => void; onGoToYears: () => void }) {
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>⚠️ Active Academic Year Required</DialogTitle>
+          <DialogDescription className="whitespace-pre-line pt-2">
+{`No Active Academic Year is currently configured.
+
+Please create and activate an Academic Year before assigning buses to drivers.
+
+Go to Admin → Academic Years to continue.`}
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button onClick={onGoToYears}>Go to Academic Years</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -702,12 +737,16 @@ function AddDriverDialog({
   buses,
   routes,
   onCreated,
+  activeYear,
+  onNeedActiveYear,
 }: {
   open: boolean;
   onClose: () => void;
   buses: BusRow[];
   routes: RouteRow[];
   onCreated: () => void;
+  activeYear: AcademicYear | null;
+  onNeedActiveYear: () => void;
 }) {
   const createDriver = useServerFn(createDriverAccount);
   const [form, setForm] = useState({
@@ -742,6 +781,10 @@ function AddDriverDialog({
     e.preventDefault();
     console.log("[AddDriver] Form submit started", { form });
     if (form.password.length < 8) return toast.error("Password must be at least 8 characters.");
+    if (form.bus_id && !activeYear) {
+      onNeedActiveYear();
+      return;
+    }
     console.log("[AddDriver] Validation passed");
     setSaving(true);
     try {
