@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { CalendarDays, CheckCircle2, Archive, Lock, Plus, Loader2 } from "lucide-react";
+import { CalendarDays, CheckCircle2, Archive, Lock, Plus, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAcademicYears, type AcademicYear } from "@/lib/academic-year";
 import { audit } from "@/lib/audit";
@@ -80,6 +80,22 @@ export function AcademicYearsTab() {
     void refresh();
   };
 
+  const remove = async (y: AcademicYear) => {
+    if (y.status !== "archived") {
+      toast.error("Only archived years can be deleted");
+      return;
+    }
+    if (!window.confirm(`Delete academic year "${y.name}"? This cannot be undone.`)) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase.from("academic_years" as any) as any)
+      .delete()
+      .eq("id", y.id);
+    if (error) return toast.error(error.message);
+    audit("academic_year.delete", { entityType: "academic_year", entityId: y.id, before: y });
+    toast.success(`${y.name} deleted`);
+    void refresh();
+  };
+
   return (
     <div className="space-y-4">
       <Card>
@@ -119,6 +135,9 @@ export function AcademicYearsTab() {
                     )}
                     {y.status !== "archived" && (
                       <Button size="sm" variant="outline" onClick={() => void archive(y)}><Archive className="mr-1 h-4 w-4" />Archive</Button>
+                    )}
+                    {y.status === "archived" && (
+                      <Button size="sm" variant="destructive" onClick={() => void remove(y)}><Trash2 className="mr-1 h-4 w-4" />Delete</Button>
                     )}
                   </div>
                 </div>
