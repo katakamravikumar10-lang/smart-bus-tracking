@@ -14,7 +14,11 @@ export function useSession() {
       .getUser()
       .then(({ data, error }) => {
         if (error) console.error("[useSession] getUser failed:", error);
-        setUser(data?.user ?? null);
+        setUser((prev) => {
+          const next = data?.user ?? null;
+          if (prev?.id === next?.id) return prev;
+          return next;
+        });
         setLoading(false);
       })
       .catch((err) => {
@@ -22,8 +26,22 @@ export function useSession() {
         setUser(null);
         setLoading(false);
       });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      setUser(session?.user ?? null);
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      // Ignore noisy events that don't represent identity changes.
+      // TOKEN_REFRESHED fires ~hourly and on tab focus; INITIAL_SESSION fires on every mount.
+      if (
+        event !== "SIGNED_IN" &&
+        event !== "SIGNED_OUT" &&
+        event !== "USER_UPDATED"
+      ) {
+        return;
+      }
+      const next = session?.user ?? null;
+      setUser((prev) => {
+        // Skip state update when identity hasn't changed (prevents re-render storm).
+        if (prev?.id === next?.id && event !== "USER_UPDATED") return prev;
+        return next;
+      });
     });
     return () => sub.subscription.unsubscribe();
   }, []);
