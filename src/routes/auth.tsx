@@ -13,6 +13,64 @@ const founderImg = { url: "/founder.webp" };
 import { MailCheck, RefreshCw, ArrowLeft } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { checkLoginLockout, recordLoginAttempt } from "@/lib/security.functions";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useRef } from "react";
+
+// Small local blocklist of commonly-leaked / trivially-guessable passwords.
+// Kept intentionally short — HIBP on the server is the authoritative check;
+// this only catches the obvious ones before the network call.
+const COMMON_WEAK_PASSWORDS = new Set(
+  [
+    "password", "password1", "password123", "passw0rd", "p@ssw0rd", "p@ssword",
+    "qwerty", "qwerty123", "qwertyuiop", "asdfghjkl", "zxcvbnm",
+    "12345678", "123456789", "1234567890", "11111111", "00000000",
+    "abcd1234", "abcdefgh", "iloveyou", "welcome1", "welcome123",
+    "letmein", "letmein1", "admin123", "administrator", "root1234",
+    "monkey123", "dragon123", "master123", "sunshine1", "princess1",
+    "football1", "baseball1", "trustno1", "starwars1", "superman1",
+  ].map((p) => p.toLowerCase()),
+);
+
+function isLikelyWeakPassword(pw: string, email?: string, name?: string): boolean {
+  const lower = pw.toLowerCase();
+  if (COMMON_WEAK_PASSWORDS.has(lower)) return true;
+  // Strip trailing digits / punctuation and re-check (e.g. "Password@2024")
+  const stripped = lower.replace(/[^a-z]/g, "");
+  if (stripped.length >= 6 && COMMON_WEAK_PASSWORDS.has(stripped)) return true;
+  // Contains the local-part of the email or user name verbatim
+  const emailLocal = (email ?? "").split("@")[0]?.toLowerCase();
+  if (emailLocal && emailLocal.length >= 4 && lower.includes(emailLocal)) return true;
+  const first = (name ?? "").trim().split(/\s+/)[0]?.toLowerCase();
+  if (first && first.length >= 4 && lower.includes(first)) return true;
+  return false;
+}
+
+function generatePasswordSuggestions(count = 4): string[] {
+  const bases = [
+    "SchoolBus", "NBusTrack", "CampusRide", "SafeRoute",
+    "RouteWatch", "BusPilot", "GudurRide", "NECTransit",
+  ];
+  const tails = ["Ravi", "Faculty", "Gmail", "Campus", "Route", "Bus", "Track", "Signal"];
+  const symbols = ["@", "#", "$", "!", "&", "%"];
+  const rand = <T,>(a: T[]) => a[Math.floor(Math.random() * a.length)];
+  const out = new Set<string>();
+  while (out.size < count) {
+    const base = rand(bases);
+    const sym = rand(symbols);
+    const year = 2024 + Math.floor(Math.random() * 4);
+    const tail = rand(tails);
+    const num = Math.floor(10 + Math.random() * 90);
+    out.add(`${base}${sym}${year}#${tail}${num}`);
+  }
+  return Array.from(out);
+}
 
 type PasswordChecks = {
   length: boolean;
@@ -398,12 +456,42 @@ function SignUpForm({ onPending }: { onPending: (email: string) => void }) {
   const score = passwordScore(checks);
   const allMet = score === 5;
   const pwErrorId = "signup-password-requirements";
+  const passwordRef = useRef<HTMLInputElement>(null);
+  const [weakDialogOpen, setWeakDialogOpen] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>(() => generatePasswordSuggestions());
+
+  function openWeakDialog() {
+    setSuggestions(generatePasswordSuggestions());
+    // Preserve every other field; only clear the password.
+    setForm((f) => ({ ...f, password: "" }));
+    setWeakDialogOpen(true);
+  }
+
+  function isWeakLeakedError(msg: string): boolean {
+    const m = msg.toLowerCase();
+    return (
+      m.includes("known to be weak") ||
+      m.includes("easy to guess") ||
+      m.includes("pwned") ||
+      m.includes("data breach") ||
+      m.includes("compromised") ||
+      m.includes("has appeared")
+    );
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setPwTouched(true);
     if (!allMet) {
       toast.error("Please choose a password that meets all requirements.");
+      return;
+    }
+    // Local leaked/common password guard — before hitting the network.
+    if (isLikelyWeakPassword(form.password, form.email, form.full_name)) {
+      toast.error(
+        "This password has appeared in previous data breaches. Please choose a unique password that you have never used before.",
+      );
+      openWeakDialog();
       return;
     }
     setLoading(true);
@@ -422,7 +510,13 @@ function SignUpForm({ onPending }: { onPending: (email: string) => void }) {
       },
     });
     setLoading(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      if (isWeakLeakedError(error.message)) {
+        openWeakDialog();
+        return;
+      }
+      return toast.error(error.message);
+    }
     if (data.session) {
       toast.success("Account created!");
       window.location.assign("/dashboard");
@@ -467,6 +561,7 @@ function SignUpForm({ onPending }: { onPending: (email: string) => void }) {
           onBlur={() => setPwTouched(true)}
           aria-describedby={pwErrorId}
           aria-invalid={pwTouched && !allMet}
+          ref={passwordRef}
         />
         {form.password.length > 0 && <PasswordStrengthMeter score={score} />}
         <PasswordRequirements checks={checks} id={pwErrorId} />
@@ -494,6 +589,63 @@ function SignUpForm({ onPending }: { onPending: (email: string) => void }) {
       <p className="text-center text-[11px] text-muted-foreground">
         Administrator accounts are provisioned by the transport office.
       </p>
+      <Dialog
+        open={weakDialogOpen}
+        onOpenChange={(open) => {
+          setWeakDialogOpen(open);
+          if (!open) {
+            // Focus the password input after closing so the user can retype.
+            window.setTimeout(() => passwordRef.current?.focus(), 0);
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Choose a Different Password</DialogTitle>
+            <DialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                <p>
+                  The password you entered has been found in previous public data breaches.
+                  Although it meets complexity requirements, it is not safe to use.
+                </p>
+                <p>
+                  Please choose a password that is unique and has never been used on another
+                  website.
+                </p>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-2 rounded-lg border border-border bg-secondary/40 p-3">
+            <p className="text-xs font-medium text-foreground">Random suggestions</p>
+            <ul className="mt-1.5 space-y-1 font-mono text-xs text-muted-foreground">
+              {suggestions.map((s) => (
+                <li key={s} className="break-all">{s}</li>
+              ))}
+            </ul>
+            <p className="mt-2 text-[11px] text-muted-foreground">
+              These are examples only — pick one you can remember, or invent your own.
+            </p>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setWeakDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                setWeakDialogOpen(false);
+                window.setTimeout(() => passwordRef.current?.focus(), 0);
+              }}
+            >
+              Change Password
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </form>
   );
 }
