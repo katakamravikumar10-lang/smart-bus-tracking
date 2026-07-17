@@ -13,7 +13,11 @@ export function useSession() {
     supabase.auth
       .getUser()
       .then(({ data, error }) => {
-        if (error) console.error("[useSession] getUser failed:", error);
+        // AuthSessionMissingError is the normal "signed-out visitor" state on
+        // public routes like /auth — treat it as no user, not an error.
+        if (error && error.name !== "AuthSessionMissingError") {
+          console.error("[useSession] getUser failed:", error);
+        }
         setUser((prev) => {
           const next = data?.user ?? null;
           if (prev?.id === next?.id) return prev;
@@ -22,7 +26,9 @@ export function useSession() {
         setLoading(false);
       })
       .catch((err) => {
-        console.error("[useSession] getUser threw:", err);
+        if ((err as { name?: string })?.name !== "AuthSessionMissingError") {
+          console.error("[useSession] getUser threw:", err);
+        }
         setUser(null);
         setLoading(false);
       });
