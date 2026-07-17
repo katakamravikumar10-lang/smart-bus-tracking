@@ -17,8 +17,12 @@ export function useAvatarUrl(pathOrUrl: string | null | undefined) {
     supabase.storage
       .from("avatars")
       .createSignedUrl(pathOrUrl, 60 * 60 * 24 * 30)
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) console.error("[useAvatarUrl] createSignedUrl failed:", error);
         if (active) setUrl(data?.signedUrl ?? null);
+      }, (err) => {
+        console.error("[useAvatarUrl] createSignedUrl threw:", err);
+        if (active) setUrl(null);
       });
     return () => {
       active = false;

@@ -10,10 +10,18 @@ export function useSession() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user);
-      setLoading(false);
-    });
+    supabase.auth
+      .getUser()
+      .then(({ data, error }) => {
+        if (error) console.error("[useSession] getUser failed:", error);
+        setUser(data?.user ?? null);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("[useSession] getUser threw:", err);
+        setUser(null);
+        setLoading(false);
+      });
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
       setUser(session?.user ?? null);
     });
@@ -32,15 +40,22 @@ export function useRole(user: User | null) {
       return;
     }
     setLoading(true);
-    supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .maybeSingle()
-      .then(({ data }) => {
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (error) console.error("[useRole] fetch failed:", error);
         setRole((data?.role as AppRole) ?? null);
+      } catch (err) {
+        console.error("[useRole] threw:", err);
+        setRole(null);
+      } finally {
         setLoading(false);
-      });
+      }
+    })();
   }, [user]);
   return { role, loading };
 }
@@ -49,12 +64,19 @@ export function useProfile(user: User | null) {
   const [profile, setProfile] = useState<Profile | null>(null);
   useEffect(() => {
     if (!user) return;
-    supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .maybeSingle()
-      .then(({ data }) => setProfile(data));
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .maybeSingle();
+        if (error) console.error("[useProfile] fetch failed:", error);
+        setProfile(data ?? null);
+      } catch (err) {
+        console.error("[useProfile] threw:", err);
+      }
+    })();
   }, [user]);
   return profile;
 }
