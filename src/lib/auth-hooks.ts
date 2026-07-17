@@ -10,10 +10,18 @@ export function useSession() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user);
-      setLoading(false);
-    });
+    supabase.auth
+      .getUser()
+      .then(({ data, error }) => {
+        if (error) console.error("[useSession] getUser failed:", error);
+        setUser(data?.user ?? null);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("[useSession] getUser threw:", err);
+        setUser(null);
+        setLoading(false);
+      });
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
       setUser(session?.user ?? null);
     });
@@ -37,8 +45,14 @@ export function useRole(user: User | null) {
       .select("role")
       .eq("user_id", user.id)
       .maybeSingle()
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) console.error("[useRole] fetch failed:", error);
         setRole((data?.role as AppRole) ?? null);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("[useRole] threw:", err);
+        setRole(null);
         setLoading(false);
       });
   }, [user]);
@@ -54,7 +68,11 @@ export function useProfile(user: User | null) {
       .select("*")
       .eq("id", user.id)
       .maybeSingle()
-      .then(({ data }) => setProfile(data));
+      .then(({ data, error }) => {
+        if (error) console.error("[useProfile] fetch failed:", error);
+        setProfile(data ?? null);
+      })
+      .catch((err) => console.error("[useProfile] threw:", err));
   }, [user]);
   return profile;
 }
