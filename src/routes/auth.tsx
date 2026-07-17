@@ -362,9 +362,19 @@ function SignUpForm({ onPending }: { onPending: (email: string) => void }) {
     role: "student" as "student" | "faculty",
   });
   const [loading, setLoading] = useState(false);
+  const [pwTouched, setPwTouched] = useState(false);
+  const checks = evaluatePassword(form.password);
+  const score = passwordScore(checks);
+  const allMet = score === 5;
+  const pwErrorId = "signup-password-requirements";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setPwTouched(true);
+    if (!allMet) {
+      toast.error("Please choose a password that meets all requirements.");
+      return;
+    }
     setLoading(true);
     const { data, error } = await supabase.auth.signUp({
       email: form.email,
@@ -415,7 +425,19 @@ function SignUpForm({ onPending }: { onPending: (email: string) => void }) {
       </div>
       <div className="space-y-1.5">
         <Label>Password</Label>
-        <Input type="password" required minLength={6} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+        <Input
+          id="signup-password"
+          type="password"
+          required
+          minLength={8}
+          value={form.password}
+          onChange={(e) => setForm({ ...form, password: e.target.value })}
+          onBlur={() => setPwTouched(true)}
+          aria-describedby={pwErrorId}
+          aria-invalid={pwTouched && !allMet}
+        />
+        {form.password.length > 0 && <PasswordStrengthMeter score={score} />}
+        <PasswordRequirements checks={checks} id={pwErrorId} />
       </div>
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-1.5">
