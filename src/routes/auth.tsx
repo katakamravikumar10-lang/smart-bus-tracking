@@ -103,12 +103,31 @@ function AuthPage() {
   const navigate = useNavigate();
   const [checking, setChecking] = useState(true);
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+  const [linkError, setLinkError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Detect expired/invalid verification links: Supabase appends error params
+    // to the redirect URL (either in the hash or query string).
+    const parseAuthError = (source: string) => {
+      const p = new URLSearchParams(source);
+      const err = p.get("error_description") || p.get("error");
+      return err ? decodeURIComponent(err.replace(/\+/g, " ")) : null;
+    };
+    const hash = window.location.hash.startsWith("#")
+      ? window.location.hash.slice(1)
+      : window.location.hash;
+    const err =
+      parseAuthError(hash) || parseAuthError(window.location.search.replace(/^\?/, ""));
+    if (err) {
+      setLinkError(err);
+      // Clean the URL so the error doesn't persist on reload
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: "/dashboard", replace: true });
       else setChecking(false);
-    });
+    }).catch(() => setChecking(false));
   }, [navigate]);
 
   if (checking) return null;
@@ -200,6 +219,18 @@ function AuthPage() {
           </div>
 
           <div className="rounded-2xl border border-border bg-card p-6 shadow-xl shadow-primary/5">
+            {linkError && !pendingEmail && (
+              <div
+                role="alert"
+                className="mb-4 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
+              >
+                <div className="font-semibold">Verification link problem</div>
+                <p className="mt-0.5 text-destructive/90">{linkError}</p>
+                <p className="mt-1 text-xs text-destructive/80">
+                  The link may have expired or already been used. Sign in below, or request a new verification email.
+                </p>
+              </div>
+            )}
             {pendingEmail ? (
               <VerifyPending email={pendingEmail} onBack={() => setPendingEmail(null)} />
             ) : (
@@ -469,26 +500,70 @@ function SignUpForm({ onPending }: { onPending: (email: string) => void }) {
 function VerifyPending({ email, onBack }: { email: string; onBack: () => void }) {
   const [resending, setResending] = useState(false);
   const [checking, setChecking] = useState(false);
+  const [cooldown, setCooldown] = useState(60);
   const navigate = useNavigate();
 
-  async function resend() {
-    setResending(true);
-    const { error } = await supabase.auth.resend({
-      type: "signup",
-      email,
-      options: { emailRedirectTo: window.location.origin },
+  // Countdown timer for the resend cooldown (initial 60s starts on mount
+  // because we assume the signup call just sent the first email).
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = window.setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => window.clearTimeout(t);
+  }, [cooldown]);
+
+  // Auto-redirect the moment the user verifies in another tab.
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if ((event === "SIGNED_IN" || event === "TOKEN_REFRESHED") && session) {
+        toast.success("Email verified. Redirecting…");
+        navigate({ to: "/dashboard", replace: true });
+      }
     });
-    setResending(false);
-    if (error) toast.error(error.message);
-    else toast.success("Verification email sent. Check your inbox.");
+    return () => sub.subscription.unsubscribe();
+  }, [navigate]);
+
+  async function resend() {
+    if (cooldown > 0 || resending) return;
+    setResending(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email,
+        options: { emailRedirectTo: window.location.origin },
+      });
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("Verification email sent. Check your inbox and spam folder.");
+        setCooldown(60);
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to resend email.";
+      toast.error(message);
+      console.error("[auth] resend verification failed", err);
+    } finally {
+      setResending(false);
+    }
   }
 
   async function recheck() {
     setChecking(true);
-    const { data } = await supabase.auth.getSession();
-    setChecking(false);
-    if (data.session) navigate({ to: "/dashboard", replace: true });
-    else toast.info("Still unverified. Open the link in the email we sent you.");
+    try {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) throw error;
+      if (data.session) {
+        toast.success("Email verified. Redirecting…");
+        navigate({ to: "/dashboard", replace: true });
+      } else {
+        toast.info("Still unverified. Open the link in the email we sent you.");
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Could not check status.";
+      toast.error(message);
+      console.error("[auth] verification recheck failed", err);
+    } finally {
+      setChecking(false);
+    }
   }
 
   return (
@@ -497,26 +572,36 @@ function VerifyPending({ email, onBack }: { email: string; onBack: () => void })
         <MailCheck className="h-7 w-7" />
       </div>
       <div>
-        <h2 className="text-lg font-semibold text-foreground">Verify your email</h2>
+        <h2 className="text-lg font-semibold text-foreground">Registration successful</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          We sent a confirmation link to
+          Please check your email to verify your account. We sent a confirmation link to
         </p>
         <p className="mt-0.5 text-sm font-medium text-foreground break-all">{email}</p>
       </div>
       <div className="rounded-lg border border-dashed border-border bg-secondary/40 p-3 text-left text-xs text-muted-foreground">
-        <p className="font-medium text-foreground">Status: Not verified yet</p>
+        <p className="font-medium text-foreground">Didn't receive the email?</p>
         <p className="mt-1">
-          Access to the dashboard is blocked until you click the confirmation link.
-          Check your spam folder if the email hasn't arrived.
+          Check your spam or junk folder, or resend the verification email below.
+          The link expires after 24 hours — if it stops working, just resend.
         </p>
       </div>
       <div className="space-y-2">
         <Button type="button" className="w-full" onClick={recheck} disabled={checking}>
           <RefreshCw className={`mr-2 h-4 w-4 ${checking ? "animate-spin" : ""}`} />
-          I've verified — continue
+          {checking ? "Checking…" : "I've verified — continue"}
         </Button>
-        <Button type="button" variant="outline" className="w-full" onClick={resend} disabled={resending}>
-          {resending ? "Sending…" : "Resend verification email"}
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full"
+          onClick={resend}
+          disabled={resending || cooldown > 0}
+        >
+          {resending
+            ? "Sending…"
+            : cooldown > 0
+              ? `Resend verification email (${cooldown}s)`
+              : "Resend verification email"}
         </Button>
         <Button type="button" variant="ghost" className="w-full" onClick={onBack}>
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to sign in
