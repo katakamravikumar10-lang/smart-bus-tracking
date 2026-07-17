@@ -40,21 +40,22 @@ export function useRole(user: User | null) {
       return;
     }
     setLoading(true);
-    supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .maybeSingle()
-      .then(({ data, error }) => {
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .maybeSingle();
         if (error) console.error("[useRole] fetch failed:", error);
         setRole((data?.role as AppRole) ?? null);
-        setLoading(false);
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error("[useRole] threw:", err);
         setRole(null);
+      } finally {
         setLoading(false);
-      });
+      }
+    })();
   }, [user]);
   return { role, loading };
 }
@@ -63,16 +64,19 @@ export function useProfile(user: User | null) {
   const [profile, setProfile] = useState<Profile | null>(null);
   useEffect(() => {
     if (!user) return;
-    supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .maybeSingle()
-      .then(({ data, error }) => {
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .maybeSingle();
         if (error) console.error("[useProfile] fetch failed:", error);
         setProfile(data ?? null);
-      })
-      .catch((err) => console.error("[useProfile] threw:", err));
+      } catch (err) {
+        console.error("[useProfile] threw:", err);
+      }
+    })();
   }, [user]);
   return profile;
 }
