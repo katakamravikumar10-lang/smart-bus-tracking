@@ -456,12 +456,42 @@ function SignUpForm({ onPending }: { onPending: (email: string) => void }) {
   const score = passwordScore(checks);
   const allMet = score === 5;
   const pwErrorId = "signup-password-requirements";
+  const passwordRef = useRef<HTMLInputElement>(null);
+  const [weakDialogOpen, setWeakDialogOpen] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>(() => generatePasswordSuggestions());
+
+  function openWeakDialog() {
+    setSuggestions(generatePasswordSuggestions());
+    // Preserve every other field; only clear the password.
+    setForm((f) => ({ ...f, password: "" }));
+    setWeakDialogOpen(true);
+  }
+
+  function isWeakLeakedError(msg: string): boolean {
+    const m = msg.toLowerCase();
+    return (
+      m.includes("known to be weak") ||
+      m.includes("easy to guess") ||
+      m.includes("pwned") ||
+      m.includes("data breach") ||
+      m.includes("compromised") ||
+      m.includes("has appeared")
+    );
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setPwTouched(true);
     if (!allMet) {
       toast.error("Please choose a password that meets all requirements.");
+      return;
+    }
+    // Local leaked/common password guard — before hitting the network.
+    if (isLikelyWeakPassword(form.password, form.email, form.full_name)) {
+      toast.error(
+        "This password has appeared in previous data breaches. Please choose a unique password that you have never used before.",
+      );
+      openWeakDialog();
       return;
     }
     setLoading(true);
@@ -480,7 +510,13 @@ function SignUpForm({ onPending }: { onPending: (email: string) => void }) {
       },
     });
     setLoading(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      if (isWeakLeakedError(error.message)) {
+        openWeakDialog();
+        return;
+      }
+      return toast.error(error.message);
+    }
     if (data.session) {
       toast.success("Account created!");
       window.location.assign("/dashboard");
