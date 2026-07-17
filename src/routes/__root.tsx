@@ -119,6 +119,31 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onRejection = (e: PromiseRejectionEvent) => {
+      const reason = e.reason;
+      const err = reason instanceof Error ? reason : new Error(String(reason ?? "Unhandled promise rejection"));
+      console.error("[unhandledrejection]", err);
+      reportLovableError(err, { boundary: "window_unhandledrejection" });
+      // Toast lazily to avoid pulling sonner into SSR path.
+      import("sonner").then(({ toast }) => {
+        toast.error("Something went wrong. Please try again.");
+      }).catch(() => {});
+    };
+    const onError = (e: ErrorEvent) => {
+      const err = e.error instanceof Error ? e.error : new Error(e.message || "Unknown error");
+      console.error("[window.error]", err);
+      reportLovableError(err, { boundary: "window_error" });
+    };
+    window.addEventListener("unhandledrejection", onRejection);
+    window.addEventListener("error", onError);
+    return () => {
+      window.removeEventListener("unhandledrejection", onRejection);
+      window.removeEventListener("error", onError);
+    };
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
