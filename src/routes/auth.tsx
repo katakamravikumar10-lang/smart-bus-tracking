@@ -23,35 +23,6 @@ import {
 } from "@/components/ui/dialog";
 import { useRef } from "react";
 
-// Small local blocklist of commonly-leaked / trivially-guessable passwords.
-// Kept intentionally short — HIBP on the server is the authoritative check;
-// this only catches the obvious ones before the network call.
-const COMMON_WEAK_PASSWORDS = new Set(
-  [
-    "password", "password1", "password123", "passw0rd", "p@ssw0rd", "p@ssword",
-    "qwerty", "qwerty123", "qwertyuiop", "asdfghjkl", "zxcvbnm",
-    "12345678", "123456789", "1234567890", "11111111", "00000000",
-    "abcd1234", "abcdefgh", "iloveyou", "welcome1", "welcome123",
-    "letmein", "letmein1", "admin123", "administrator", "root1234",
-    "monkey123", "dragon123", "master123", "sunshine1", "princess1",
-    "football1", "baseball1", "trustno1", "starwars1", "superman1",
-  ].map((p) => p.toLowerCase()),
-);
-
-function isLikelyWeakPassword(pw: string, email?: string, name?: string): boolean {
-  const lower = pw.toLowerCase();
-  if (COMMON_WEAK_PASSWORDS.has(lower)) return true;
-  // Strip trailing digits / punctuation and re-check (e.g. "Password@2024")
-  const stripped = lower.replace(/[^a-z]/g, "");
-  if (stripped.length >= 6 && COMMON_WEAK_PASSWORDS.has(stripped)) return true;
-  // Contains the local-part of the email or user name verbatim
-  const emailLocal = (email ?? "").split("@")[0]?.toLowerCase();
-  if (emailLocal && emailLocal.length >= 4 && lower.includes(emailLocal)) return true;
-  const first = (name ?? "").trim().split(/\s+/)[0]?.toLowerCase();
-  if (first && first.length >= 4 && lower.includes(first)) return true;
-  return false;
-}
-
 function generatePasswordSuggestions(count = 4): string[] {
   const bases = [
     "SchoolBus", "NBusTrack", "CampusRide", "SafeRoute",
@@ -484,14 +455,6 @@ function SignUpForm({ onPending }: { onPending: (email: string) => void }) {
     setPwTouched(true);
     if (!allMet) {
       toast.error("Please choose a password that meets all requirements.");
-      return;
-    }
-    // Local leaked/common password guard — before hitting the network.
-    if (isLikelyWeakPassword(form.password, form.email, form.full_name)) {
-      toast.error(
-        "This password has appeared in previous data breaches. Please choose a unique password that you have never used before.",
-      );
-      openWeakDialog();
       return;
     }
     setLoading(true);
