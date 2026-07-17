@@ -348,7 +348,7 @@ function SignInForm({ onUnverified }: { onUnverified: (email: string) => void })
         </div>
         <div className="space-y-2">
           <Label htmlFor="forgot-email">Email</Label>
-          <Input id="forgot-email" type="email" required value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} placeholder="you@narayana.edu" />
+          <Input id="forgot-email" type="email" autoComplete="username" required value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} placeholder="you@narayana.edu" />
         </div>
         <Button type="submit" className="w-full" disabled={forgotLoading}>
           {forgotLoading ? "Sending…" : "Send reset link"}
@@ -364,7 +364,7 @@ function SignInForm({ onUnverified }: { onUnverified: (email: string) => void })
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="signin-email">Enter your register email</Label>
-        <Input id="signin-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@narayana.edu" />
+        <Input id="signin-email" type="email" autoComplete="username" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@narayana.edu" />
       </div>
       <div className="space-y-2">
         <div className="flex items-center justify-between">
@@ -373,7 +373,7 @@ function SignInForm({ onUnverified }: { onUnverified: (email: string) => void })
             Forgot password?
           </button>
         </div>
-        <Input id="signin-password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+        <Input id="signin-password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
       </div>
       <Button type="submit" className="w-full" disabled={loading}>
         {loading ? "Signing in…" : "Sign in"}
@@ -452,13 +452,14 @@ function SignUpForm({ onPending }: { onPending: (email: string) => void }) {
       </div>
       <div className="space-y-1.5">
         <Label>Email</Label>
-        <Input type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+        <Input type="email" autoComplete="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
       </div>
       <div className="space-y-1.5">
         <Label>Password</Label>
         <Input
           id="signup-password"
           type="password"
+          autoComplete="new-password"
           required
           minLength={8}
           value={form.password}
