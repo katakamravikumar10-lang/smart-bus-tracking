@@ -531,6 +531,54 @@ export type Database = {
           },
         ]
       }
+      retention_log: {
+        Row: {
+          cutoff_at: string
+          duration_ms: number | null
+          error: string | null
+          id: string
+          ran_at: string
+          rows_deleted: number
+          table_name: string
+        }
+        Insert: {
+          cutoff_at: string
+          duration_ms?: number | null
+          error?: string | null
+          id?: string
+          ran_at?: string
+          rows_deleted?: number
+          table_name: string
+        }
+        Update: {
+          cutoff_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          id?: string
+          ran_at?: string
+          rows_deleted?: number
+          table_name?: string
+        }
+        Relationships: []
+      }
+      retention_settings: {
+        Row: {
+          retention_days: number
+          table_name: string
+          updated_at: string
+        }
+        Insert: {
+          retention_days: number
+          table_name: string
+          updated_at?: string
+        }
+        Update: {
+          retention_days?: number
+          table_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       routes: {
         Row: {
           active: boolean
@@ -785,6 +833,7 @@ export type Database = {
     }
     Functions: {
       active_academic_year_id: { Args: never; Returns: string }
+      cleanup_login_attempts: { Args: never; Returns: undefined }
       current_user_role: {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"]
