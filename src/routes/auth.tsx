@@ -561,6 +561,7 @@ function SignUpForm({ onPending }: { onPending: (email: string) => void }) {
           onBlur={() => setPwTouched(true)}
           aria-describedby={pwErrorId}
           aria-invalid={pwTouched && !allMet}
+          ref={passwordRef}
         />
         {form.password.length > 0 && <PasswordStrengthMeter score={score} />}
         <PasswordRequirements checks={checks} id={pwErrorId} />
@@ -588,6 +589,63 @@ function SignUpForm({ onPending }: { onPending: (email: string) => void }) {
       <p className="text-center text-[11px] text-muted-foreground">
         Administrator accounts are provisioned by the transport office.
       </p>
+      <Dialog
+        open={weakDialogOpen}
+        onOpenChange={(open) => {
+          setWeakDialogOpen(open);
+          if (!open) {
+            // Focus the password input after closing so the user can retype.
+            window.setTimeout(() => passwordRef.current?.focus(), 0);
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Choose a Different Password</DialogTitle>
+            <DialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                <p>
+                  The password you entered has been found in previous public data breaches.
+                  Although it meets complexity requirements, it is not safe to use.
+                </p>
+                <p>
+                  Please choose a password that is unique and has never been used on another
+                  website.
+                </p>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-2 rounded-lg border border-border bg-secondary/40 p-3">
+            <p className="text-xs font-medium text-foreground">Random suggestions</p>
+            <ul className="mt-1.5 space-y-1 font-mono text-xs text-muted-foreground">
+              {suggestions.map((s) => (
+                <li key={s} className="break-all">{s}</li>
+              ))}
+            </ul>
+            <p className="mt-2 text-[11px] text-muted-foreground">
+              These are examples only — pick one you can remember, or invent your own.
+            </p>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setWeakDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                setWeakDialogOpen(false);
+                window.setTimeout(() => passwordRef.current?.focus(), 0);
+              }}
+            >
+              Change Password
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </form>
   );
 }
