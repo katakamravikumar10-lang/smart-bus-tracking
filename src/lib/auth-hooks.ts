@@ -14,7 +14,11 @@ export function useSession() {
       .getUser()
       .then(({ data, error }) => {
         if (error) console.error("[useSession] getUser failed:", error);
-        setUser(data?.user ?? null);
+        setUser((prev) => {
+          const next = data?.user ?? null;
+          if (prev?.id === next?.id) return prev;
+          return next;
+        });
         setLoading(false);
       })
       .catch((err) => {
@@ -22,8 +26,22 @@ export function useSession() {
         setUser(null);
         setLoading(false);
       });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      setUser(session?.user ?? null);
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      // Ignore noisy events that don't represent identity changes.
+      // TOKEN_REFRESHED fires ~hourly and on tab focus; INITIAL_SESSION fires on every mount.
+      if (
+        event !== "SIGNED_IN" &&
+        event !== "SIGNED_OUT" &&
+        event !== "USER_UPDATED"
+      ) {
+        return;
+      }
+      const next = session?.user ?? null;
+      setUser((prev) => {
+        // Skip state update when identity hasn't changed (prevents re-render storm).
+        if (prev?.id === next?.id && event !== "USER_UPDATED") return prev;
+        return next;
+      });
     });
     return () => sub.subscription.unsubscribe();
   }, []);
@@ -33,50 +51,67 @@ export function useSession() {
 export function useRole(user: User | null) {
   const [role, setRole] = useState<AppRole | null>(null);
   const [loading, setLoading] = useState(true);
+  const userId = user?.id ?? null;
   useEffect(() => {
-    if (!user) {
+    if (!userId) {
       setRole(null);
       setLoading(false);
       return;
     }
     setLoading(true);
+    let active = true;
     (async () => {
       try {
         const { data, error } = await supabase
           .from("user_roles")
           .select("role")
-          .eq("user_id", user.id)
+          .eq("user_id", userId)
           .maybeSingle();
+        if (!active) return;
         if (error) console.error("[useRole] fetch failed:", error);
         setRole((data?.role as AppRole) ?? null);
       } catch (err) {
+        if (!active) return;
         console.error("[useRole] threw:", err);
         setRole(null);
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     })();
-  }, [user]);
+    return () => {
+      active = false;
+    };
+  }, [userId]);
   return { role, loading };
 }
 
 export function useProfile(user: User | null) {
   const [profile, setProfile] = useState<Profile | null>(null);
+  const userId = user?.id ?? null;
   useEffect(() => {
-    if (!user) return;
+    if (!userId) {
+      setProfile(null);
+      return;
+    }
+    let active = true;
     (async () => {
       try {
         const { data, error } = await supabase
           .from("profiles")
           .select("*")
-          .eq("id", user.id)
+          .eq("id", userId)
           .maybeSingle();
+        if (!active) return;
         if (error) console.error("[useProfile] fetch failed:", error);
         setProfile(data ?? null);
       } catch (err) {
+        if (!active) return;
         console.error("[useProfile] threw:", err);
       }
     })();
-  }, [user]);
+    return () => {
+      active = false;
+    };
+  }, [userId]);
   return profile;
 }
