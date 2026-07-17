@@ -103,12 +103,31 @@ function AuthPage() {
   const navigate = useNavigate();
   const [checking, setChecking] = useState(true);
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+  const [linkError, setLinkError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Detect expired/invalid verification links: Supabase appends error params
+    // to the redirect URL (either in the hash or query string).
+    const parseAuthError = (source: string) => {
+      const p = new URLSearchParams(source);
+      const err = p.get("error_description") || p.get("error");
+      return err ? decodeURIComponent(err.replace(/\+/g, " ")) : null;
+    };
+    const hash = window.location.hash.startsWith("#")
+      ? window.location.hash.slice(1)
+      : window.location.hash;
+    const err =
+      parseAuthError(hash) || parseAuthError(window.location.search.replace(/^\?/, ""));
+    if (err) {
+      setLinkError(err);
+      // Clean the URL so the error doesn't persist on reload
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: "/dashboard", replace: true });
       else setChecking(false);
-    });
+    }).catch(() => setChecking(false));
   }, [navigate]);
 
   if (checking) return null;
@@ -200,6 +219,18 @@ function AuthPage() {
           </div>
 
           <div className="rounded-2xl border border-border bg-card p-6 shadow-xl shadow-primary/5">
+            {linkError && !pendingEmail && (
+              <div
+                role="alert"
+                className="mb-4 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
+              >
+                <div className="font-semibold">Verification link problem</div>
+                <p className="mt-0.5 text-destructive/90">{linkError}</p>
+                <p className="mt-1 text-xs text-destructive/80">
+                  The link may have expired or already been used. Sign in below, or request a new verification email.
+                </p>
+              </div>
+            )}
             {pendingEmail ? (
               <VerifyPending email={pendingEmail} onBack={() => setPendingEmail(null)} />
             ) : (
