@@ -14,6 +14,81 @@ import { MailCheck, RefreshCw, ArrowLeft } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { checkLoginLockout, recordLoginAttempt } from "@/lib/security.functions";
 
+type PasswordChecks = {
+  length: boolean;
+  upper: boolean;
+  lower: boolean;
+  number: boolean;
+  special: boolean;
+};
+
+function evaluatePassword(pw: string): PasswordChecks {
+  return {
+    length: pw.length >= 8,
+    upper: /[A-Z]/.test(pw),
+    lower: /[a-z]/.test(pw),
+    number: /[0-9]/.test(pw),
+    special: /[^A-Za-z0-9]/.test(pw),
+  };
+}
+
+function passwordScore(c: PasswordChecks): number {
+  return Number(c.length) + Number(c.upper) + Number(c.lower) + Number(c.number) + Number(c.special);
+}
+
+function passwordStrengthLabel(score: number): { label: "Weak" | "Medium" | "Strong"; tone: string; bar: string } {
+  if (score <= 2) return { label: "Weak", tone: "text-destructive", bar: "bg-destructive" };
+  if (score <= 4) return { label: "Medium", tone: "text-amber-600 dark:text-amber-400", bar: "bg-amber-500" };
+  return { label: "Strong", tone: "text-emerald-600 dark:text-emerald-400", bar: "bg-emerald-500" };
+}
+
+function PasswordRequirements({ checks, id }: { checks: PasswordChecks; id: string }) {
+  const items: { key: keyof PasswordChecks; label: string }[] = [
+    { key: "length", label: "At least 8 characters" },
+    { key: "upper", label: "One uppercase letter (A-Z)" },
+    { key: "lower", label: "One lowercase letter (a-z)" },
+    { key: "number", label: "One number (0-9)" },
+    { key: "special", label: "One special character (!@#$…)" },
+  ];
+  return (
+    <ul id={id} className="mt-1 space-y-0.5 text-xs" aria-live="polite">
+      {items.map((it) => {
+        const ok = checks[it.key];
+        return (
+          <li
+            key={it.key}
+            className={ok ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}
+          >
+            <span aria-hidden="true" className="mr-1.5">{ok ? "✓" : "•"}</span>
+            <span className="sr-only">{ok ? "Met: " : "Not met: "}</span>
+            {it.label}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function PasswordStrengthMeter({ score }: { score: number }) {
+  const pct = (score / 5) * 100;
+  const { label, tone, bar } = passwordStrengthLabel(score);
+  return (
+    <div className="mt-1.5">
+      <div
+        className="h-1.5 w-full overflow-hidden rounded-full bg-secondary"
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={5}
+        aria-valuenow={score}
+        aria-label={`Password strength: ${label}`}
+      >
+        <div className={`h-full ${bar} transition-all`} style={{ width: `${pct}%` }} />
+      </div>
+      <div className={`mt-1 text-xs font-medium ${tone}`}>Strength: {label}</div>
+    </div>
+  );
+}
+
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
@@ -287,9 +362,19 @@ function SignUpForm({ onPending }: { onPending: (email: string) => void }) {
     role: "student" as "student" | "faculty",
   });
   const [loading, setLoading] = useState(false);
+  const [pwTouched, setPwTouched] = useState(false);
+  const checks = evaluatePassword(form.password);
+  const score = passwordScore(checks);
+  const allMet = score === 5;
+  const pwErrorId = "signup-password-requirements";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setPwTouched(true);
+    if (!allMet) {
+      toast.error("Please choose a password that meets all requirements.");
+      return;
+    }
     setLoading(true);
     const { data, error } = await supabase.auth.signUp({
       email: form.email,
@@ -340,7 +425,19 @@ function SignUpForm({ onPending }: { onPending: (email: string) => void }) {
       </div>
       <div className="space-y-1.5">
         <Label>Password</Label>
-        <Input type="password" required minLength={6} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+        <Input
+          id="signup-password"
+          type="password"
+          required
+          minLength={8}
+          value={form.password}
+          onChange={(e) => setForm({ ...form, password: e.target.value })}
+          onBlur={() => setPwTouched(true)}
+          aria-describedby={pwErrorId}
+          aria-invalid={pwTouched && !allMet}
+        />
+        {form.password.length > 0 && <PasswordStrengthMeter score={score} />}
+        <PasswordRequirements checks={checks} id={pwErrorId} />
       </div>
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-1.5">
